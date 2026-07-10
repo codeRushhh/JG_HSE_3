@@ -1,122 +1,117 @@
 # Joseph Group HSE Portal — merged app
 
-This folder combines your three separate apps into one:
+This combines your three apps into one:
 
-- **Joseph Group HSE Inspections** (the 11-module React app)
+- **Joseph Group HSE Inspections** (11-module React app)
 - **JGM Site Safety** (ADNOC / ENOC / EMARAT / CIVIL)
 - **JA Installation** (site safety inspections)
 
-...behind **one PIN login** and **one dashboard** with a tile for each app.
-All three save their data into **one new Supabase project** that you'll
-create fresh — nothing here is connected to any of your old accounts.
+...behind **one PIN login** and **one dashboard** with a tile for each app,
+all saving into **one new Supabase project** you'll create.
 
 ---
 
-## What actually changed under the hood
+## ⭐ You only need to edit ONE file: `credentials.txt`
 
-Nothing about how any of the three apps *work* has changed — every screen,
-form, checklist and report is exactly what it was before. What changed is
-only **where the data is saved**: all three now write into one shared
-Supabase table called `kv_store`, each using its own prefix (`jg:`, `jgm:`,
-`ja:`) so their data can never collide.
+Every other file in this project is already finished — you never need to
+open, edit, or rename any `.js` or `.html` file. Just:
 
-A new front page (`portal-index.html`) asks for a single 4-digit PIN, then
-shows one dashboard with three tiles — tapping a tile opens that app.
+1. Create a new Supabase project (Step 1 below)
+2. Open `credentials.txt` in Notepad (it's a normal text file, opens fine)
+3. Paste in your two values
+4. Save it
+5. Push everything to GitHub → deploy on Netlify
+
+The build process reads `credentials.txt` automatically and fills the
+values into all three apps for you.
 
 ---
 
-## Setup — 4 steps
+## Step 1: Create the new Supabase project
 
-### Step 1: Create the new Supabase project
+1. Go to **supabase.com** → sign up / log in → **New project**
+2. Name it anything (e.g. `joseph-group-hse-portal`), set a password, pick
+   a region close to the UAE
+3. Click **Create new project** and wait ~1-2 minutes
 
-1. Go to [supabase.com](https://supabase.com) → **New project**.
-2. Pick a name (e.g. `joseph-group-hse-portal`), a password, and a region
-   close to the UAE (e.g. Frankfurt or Mumbai). Click **Create**. Takes
-   about a minute to spin up.
-3. Once it's ready, go to **Project Settings → API**. You'll need two
-   values from this page in Step 2:
-   - **Project URL** (looks like `https://xxxxxxxxxxxx.supabase.co`)
-   - **anon public** key (a long string starting with `sb_publishable_` or `eyJ...`)
+Then get your two values:
 
-### Step 2: Paste your new credentials into 3 files
+1. Click the **gear icon (Settings)** on the left sidebar
+2. Click **API**
+3. Copy the **Project URL** (looks like `https://xxxxx.supabase.co`)
+4. Copy the **anon public** key (a long string)
 
-Each of the three apps has its own copy of the Supabase URL and key
-(this is intentional — it keeps each app independent). Open each file
-below and replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` with
-the real values from Step 1:
+---
 
-- `joseph-group-app/src/lib/storageShim.js` (near the top)
-- `jgm/index.html` (search for `SUPABASE_URL`)
-- `ja-installation/index.html` (search for `SUPABASE_URL`)
+## Step 2: Edit `credentials.txt`
 
-Each file has two lines that look like this:
+1. In the unzipped folder, double-click `credentials.txt` — it opens in
+   Notepad normally (it's a real `.txt` file, no tricks needed)
+2. You'll see:
+   ```
+   SUPABASE_URL=YOUR_SUPABASE_URL
+   SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+   ```
+3. Replace `YOUR_SUPABASE_URL` with the Project URL you copied (no quote
+   marks, no spaces)
+4. Replace `YOUR_SUPABASE_ANON_KEY` with the anon public key you copied
+5. Save (Ctrl+S) and close Notepad
 
-```js
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
-```
+That's the only editing you'll ever do. Everything else is already built.
 
-Just replace the placeholder text between the quotes — keep the quotes.
+---
 
-### Step 3: Run the SQL in Supabase (2 minutes)
+## Step 3: Set up the database table
 
-1. In your new Supabase project, open **SQL Editor → New query**.
-2. Open `supabase_setup.sql` from this folder, copy all of it, paste it
-   in, click **Run**.
-3. This creates the shared `kv_store` table all three apps write into.
-   Since it's a brand new project, there's no old data to migrate.
+1. In Supabase, click **SQL Editor** → **New query**
+2. Open `supabase_setup.sql` from the folder, select all, copy it
+3. Paste into the Supabase SQL box, click **Run**
+4. You should see a "Success" message
 
-### Step 4: Push to a new GitHub repo and deploy on Netlify
+---
 
-1. Create a new GitHub repo (e.g. `7akatsuki/joseph-group-hse-portal`) and
-   push this whole `merged` folder to it.
-2. In Netlify: **Add new site → Import an existing project** → pick the
-   new repo.
-3. Netlify auto-detects the build settings from `netlify.toml` — you
-   don't need to type anything in manually.
-4. Click **Deploy**. Netlify will:
-   - Install and build the Joseph Group React app
-   - Copy JGM and JA Installation's files in as-is
-   - Combine everything into one site with the portal as the homepage
+## Step 4: Push to GitHub
 
-That's it — one URL, one PIN, three apps, one fresh database.
+1. Create a new GitHub repo (e.g. `joseph-group-hse-portal`)
+2. Push this whole `merged` folder to it (including `credentials.txt` with
+   your real values — this is fine to commit; Supabase's "anon public" key
+   is designed to be safely visible in client-side code)
+
+---
+
+## Step 5: Deploy on Netlify
+
+1. Go to **netlify.com** → **Add new site** → **Import an existing project**
+2. Pick your new GitHub repo
+3. Don't change any build settings — `netlify.toml` already has everything
+   configured
+4. Click **Deploy site**
+5. Wait a minute or two — Netlify will read `credentials.txt` automatically
+   during the build and wire up all three apps
+6. You'll get a link like `something.netlify.app` — open it
+
+You should see one PIN login (default `2526`), then a dashboard with 3 tiles.
+
+**If the build fails**, check the Netlify build log — if `credentials.txt`
+still has placeholder text in it, the build will stop and tell you exactly
+that, rather than deploying a broken site.
 
 ---
 
 ## Changing the portal PIN
 
-Open `portal-index.html`, find this line near the bottom:
+Open `portal-index.html` (this one you're welcome to edit — it's plain
+HTML), find:
 
 ```js
-const PORTAL_PIN = "2526"; // Change this any time — see README for how.
+const PORTAL_PIN = "2526";
 ```
 
-Change `"2526"` to whatever 4-digit PIN you want, save, and push to GitHub —
-Netlify redeploys automatically.
+Change the number, save, push to GitHub. Netlify redeploys automatically.
 
-Note: this PIN only gates the **portal's front door**. Once inside, each
-app still has its own internal login as before — the Joseph Group app's
-fixed PIN (`8080`), and JGM/JA's per-person HSE PINs and Team Leader mobile
-number sign-in. I left those exactly as they were rather than merging them,
-since they use different identity models (a single shared PIN vs. named
-individuals vs. mobile-number self-registration) — merging those into a
-single sign-on would mean redesigning how each app recognizes its users.
-Happy to tackle that as a next step if you'd like everyone to have just one
-login across the board.
-
----
-
-## Testing locally before deploying (optional)
-
-You'll need Node.js installed.
-
-```bash
-bash build.sh
-```
-
-This builds everything into a `publish/` folder. Open it with a local
-server (e.g. `npx serve publish`) to preview the whole portal — the Joseph
-Group app's routing needs to be served properly, not opened as a plain file.
+Each app underneath still keeps its own original login too — the Joseph
+Group app's fixed PIN (`8080`), and JGM/JA's per-person HSE PINs and Team
+Leader mobile sign-in. The portal PIN is just the new front door on top.
 
 ---
 
@@ -124,12 +119,13 @@ Group app's routing needs to be served properly, not opened as a plain file.
 
 ```
 merged/
-├── portal-index.html      ← the one login + dashboard (becomes the site's homepage)
+├── credentials.txt          ← ⭐ the ONLY file you edit
+├── portal-index.html        ← the login + dashboard homepage (PIN is here)
 ├── portal-manifest.json
-├── netlify.toml            ← tells Netlify how to build everything
-├── build.sh                 ← the build script Netlify runs automatically
-├── supabase_setup.sql       ← run once in your new Supabase project
-├── joseph-group-app/        ← React source for the 11 inspection modules
-├── jgm/                      ← JGM Site Safety (static, unchanged except storage prefix)
-└── ja-installation/          ← JA Installation (static, unchanged except storage backend)
+├── netlify.toml               ← tells Netlify how to build everything
+├── build.sh                    ← runs automatically, reads credentials.txt
+├── supabase_setup.sql          ← run once in your new Supabase project
+├── joseph-group-app/           ← React source, credentials filled automatically
+├── jgm/                         ← JGM Site Safety, credentials filled automatically
+└── ja-installation/             ← JA Installation, credentials filled automatically
 ```

@@ -13,11 +13,15 @@
 //
 // This means Joseph Group reports are now shared across every device/phone
 // automatically — no more "Sayed's phone doesn't see Sharan's phone" issue.
+//
+// CREDENTIALS: you never need to edit this file. The real Supabase URL and
+// key are filled in automatically at build time from the plain-text file
+// "credentials.txt" in the main project folder.
 
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 const APP_NS = "jg:";
 
 let sb = null;
