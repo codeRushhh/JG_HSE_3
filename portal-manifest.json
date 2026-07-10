@@ -1,0 +1,9 @@
+{
+  "name": "Joseph Group HSE Portal",
+  "short_name": "JG HSE Portal",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#163878",
+  "icons": []
+}

@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>JGM Site Safety Inspection Report</title>
+<meta name="description" content="Daily site safety inspection reporting for JGM Team Leaders and HSE staff — checklist submissions, compliance tracking, and reporting dashboards.">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JGM Safety">
+<meta name="theme-color" content="#163878">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --navy:#163878;
+  --navy-dark:#0e2a5e;
+  --navy-tint:#eaf0fb;
+  --maroon:#590515;
+  --maroon-light:#732533;
+  --maroon-tint:#f7e9eb;
+  --white:#ffffff;
+  --grey-bg:#f2f3f5;
+  --grey-border:#e0e2e7;
+  --grey-mid:#9aa1ac;
+  --text:#1a1f2b;
+  --text-soft:#5b6270;
+  --success:#1e8e5a;
+  --success-tint:#e7f5ee;
+  --danger:#c0392b;
+  --danger-tint:#fbebe9;
+  --warning:#b9720b;
+  --warning-tint:#fbf1e0;
+  --radius:14px;
+  --shadow:0 2px 10px rgba(22,56,120,0.08);
+  /* per-area accent colors */
+  --area-adnoc:#2E86C1;
+  --area-adnoc-tint:#eaf3fb;
+  --area-enoc:#D32F2F;
+  --area-enoc-tint:#fdecec;
+  --area-emarat:#43A047;
+  --area-emarat-tint:#eaf6ec;
+  --area-civil:#B8860B;
+  --area-civil-tint:#f9f1de;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--grey-bg);
+  color:var(--text);
+  -webkit-tap-highlight-color:transparent;
+}
+#app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--white);display:flex;flex-direction:column;position:relative;box-shadow:0 0 40px rgba(0,0,0,0.06);}
+.topbar{
+  background:linear-gradient(135deg,var(--navy) 0%, var(--navy-dark) 100%);
+  color:var(--white);
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  position:sticky;top:0;z-index:20;
+}
+.topbar img{height:34px;width:auto;display:block;border-radius:6px;background:#fff;padding:3px;}
+.topbar .title{font-size:15px;font-weight:700;line-height:1.25;}
+.topbar .sub{font-size:11px;opacity:0.85;font-weight:500;}
+.topbar .spacer{flex:1;}
+.topbar button.icon-btn{
+  background:rgba(255,255,255,0.14);border:none;color:#fff;border-radius:10px;
+  padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;
+}
+.hamburger-btn{
+  background:rgba(255,255,255,0.16);border:none;border-radius:10px;
+  width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+}
+.hamburger-btn svg{width:18px;height:18px;}
+.topbar img.logo-sm{height:30px;width:auto;border-radius:6px;background:#fff;padding:2px;flex-shrink:0;}
+
+/* Drawer */
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,20,30,0.5);z-index:200;display:flex;}
+.drawer-panel{background:#fff;width:82%;max-width:340px;height:100%;display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,0.15);animation:slideIn .18s ease;}
+@keyframes slideIn{from{transform:translateX(-14px);opacity:0.6;}to{transform:translateX(0);opacity:1;}}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--grey-border);}
+.drawer-header img{height:34px;}
+.drawer-close-btn{background:var(--grey-bg);border:none;border-radius:10px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--text-soft);}
+.drawer-menu{padding:14px 10px;flex:1;}
+.drawer-item{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:12px;cursor:pointer;font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;}
+.drawer-item:active{background:var(--navy-tint);}
+.drawer-item.active-item{background:var(--navy-tint);color:var(--navy);}
+.drawer-item .di-icon{width:22px;height:22px;flex-shrink:0;color:var(--navy);}
+.drawer-item .di-chev{margin-left:auto;color:var(--grey-mid);}
+.drawer-item.locked .di-icon{color:var(--maroon);}
+.drawer-footer{padding:16px;text-align:center;font-size:11.5px;color:var(--grey-mid);border-top:1px solid var(--grey-border);}
+
+/* Gradient home stat card */
+.home-hero{
+  background:linear-gradient(115deg, var(--maroon) 0%, var(--navy) 100%);
+  border-radius:18px;padding:20px;color:#fff;margin-bottom:16px;
+}
+.home-hero .hero-date{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;opacity:0.92;margin-bottom:16px;}
+.home-hero .hero-date svg{width:16px;height:16px;}
+.hero-stats{display:flex;align-items:center;}
+.hero-stats .hstat{flex:1;}
+.hero-stats .hstat .hnum{font-size:28px;font-weight:900;line-height:1;}
+.hero-stats .hstat .hlbl{font-size:10.5px;font-weight:700;letter-spacing:0.4px;opacity:0.85;text-transform:uppercase;margin-bottom:4px;}
+.hero-divider{width:1px;height:36px;background:rgba(255,255,255,0.35);margin:0 18px;}
+
+.start-inspection-btn{
+  display:flex;align-items:center;gap:12px;width:100%;background:#fff;
+  border:2px solid var(--maroon);border-radius:16px;padding:16px 18px;cursor:pointer;
+  font-size:15.5px;font-weight:800;color:var(--maroon);margin-bottom:20px;box-shadow:var(--shadow);
+}
+.start-inspection-btn .si-icon{width:20px;height:20px;}
+.start-inspection-btn .si-chev{margin-left:auto;}
+
+.section-label{font-size:11.5px;font-weight:800;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+.area-tile-v2{
+  display:flex;align-items:center;gap:10px;padding:18px 14px;border-radius:14px;
+  border:1.75px solid var(--grey-border);background:#fff;cursor:pointer;font-weight:800;font-size:14.5px;
+}
+.area-tile-v2 svg{width:20px;height:20px;flex-shrink:0;}
+.area-tile-v2.adnoc{border-color:var(--area-adnoc);color:var(--area-adnoc);}
+.area-tile-v2.enoc{border-color:var(--area-enoc);color:var(--area-enoc);}
+.area-tile-v2.emarat{border-color:var(--area-emarat);color:var(--area-emarat);}
+.area-tile-v2.civil{border-color:var(--area-civil);color:var(--area-civil);}
+.area-tile-v2:active{opacity:0.75;}
+.tile-badge{position:absolute;top:-8px;right:-8px;font-size:10px;font-weight:800;padding:3px 7px;border-radius:20px;box-shadow:0 1px 4px rgba(0,0,0,0.2);}
+.tile-badge.submitted{background:var(--success);color:#fff;}
+.tile-badge.draft{background:var(--warning);color:#fff;}
+
+.brand-footer-card{background:#fff;border:1px solid var(--grey-border);border-radius:16px;padding:24px 18px;text-align:center;margin-top:18px;box-shadow:var(--shadow);}
+.brand-footer-card img{height:40px;margin-bottom:12px;}
+.brand-footer-card .bf-title{font-weight:700;font-size:13.5px;color:var(--text);}
+.brand-footer-card .bf-ref{font-size:11.5px;color:var(--text-soft);margin-top:3px;}
+
+.chart-card{background:#fff;border:1px solid var(--grey-border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow);}
+.chart-card h3{margin:0 0 12px;font-size:14px;color:var(--navy);}
+.chart-wrap{position:relative;height:220px;}
+.chart-wrap.small{height:180px;}
+.content{flex:1;padding:18px;padding-bottom:36px;}
+.center-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:24px;}
+.cover-bg{
+  min-height:100vh;
+  background-color:var(--grey-bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(22,56,120,0.12) 1.4px, transparent 0);
+  background-size: 24px 24px;
+  position:relative;
+}
+.cover-bg::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:130px;
+  background:linear-gradient(160deg, var(--maroon) 0%, var(--navy) 100%);
+  clip-path:polygon(0 0,100% 0,100% 45%,0 100%);
+  opacity:0.95;z-index:0;
+}
+.cover-content{position:relative;z-index:1;padding-top:6px;}
+.cover-content .logo-badge{display:inline-block;background:#fff;border-radius:16px;padding:14px 20px;box-shadow:0 8px 28px rgba(22,56,120,0.25);}
+.cover-content .logo-badge .logo-big{margin-bottom:0;display:block;}
+.logo-big{width:120px;height:auto;margin-bottom:18px;}
+h1.brand-title{font-size:22px;color:var(--navy);margin:0 0 4px;font-weight:800;letter-spacing:-0.2px;}
+p.brand-sub{color:var(--text-soft);font-size:14px;margin:0 0 30px;}
+.role-stack{width:100%;display:flex;flex-direction:column;gap:14px;}
+.big-btn{
+  display:flex;align-items:center;gap:14px;width:100%;
+  padding:20px;border-radius:var(--radius);border:none;cursor:pointer;
+  font-size:16px;font-weight:700;text-align:left;box-shadow:var(--shadow);
+  transition:transform .12s ease;
+}
+.big-btn:active{transform:scale(0.98);}
+.big-btn.navy{background:var(--navy);color:#fff;}
+.big-btn.maroon{background:var(--maroon);color:#fff;}
+.big-btn .emoji{font-size:26px;}
+.big-btn small{display:block;font-weight:500;font-size:12.5px;opacity:0.85;margin-top:2px;}
+
+.card{background:#fff;border:1px solid var(--grey-border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+.card h3{margin:0 0 10px;font-size:15px;color:var(--navy);}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 18px;border-radius:12px;border:none;cursor:pointer;
+  font-size:15px;font-weight:700;width:100%;transition:transform .1s ease, opacity .15s ease;
+}
+.btn:active{transform:scale(0.98);}
+.btn.primary{background:var(--navy);color:#fff;}
+.btn.maroon{background:var(--maroon);color:#fff;}
+.btn.success{background:var(--success);color:#fff;}
+.btn.outline{background:#fff;color:var(--navy);border:2px solid var(--navy);}
+.btn.outline.maroon-o{color:var(--maroon);border-color:var(--maroon);}
+.btn.ghost{background:transparent;color:var(--text-soft);font-weight:600;}
+.btn.danger{background:var(--danger);color:#fff;}
+.btn.small{padding:9px 12px;font-size:13px;width:auto;border-radius:9px;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-row{display:flex;gap:10px;}
+.btn-row .btn{flex:1;}
+
+label.field-label{display:block;font-size:12.5px;font-weight:700;color:var(--text-soft);margin:14px 0 6px;text-transform:uppercase;letter-spacing:0.3px;}
+label.field-label:first-child{margin-top:0;}
+input[type=text], input[type=tel], input[type=date], select, textarea{
+  width:100%;padding:14px;border-radius:11px;border:1.5px solid var(--grey-border);
+  font-size:15.5px;background:#fbfbfc;color:var(--text);font-family:inherit;
+}
+input:focus, select:focus, textarea:focus{outline:2px solid var(--navy);border-color:var(--navy);background:#fff;}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%23163878' stroke-width='2' fill='none' fill-rule='evenodd'/></svg>");background-repeat:no-repeat;background-position:right 16px center;padding-right:38px;}
+textarea{min-height:70px;resize:vertical;}
+
+.area-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.area-tile{
+  padding:26px 10px;border-radius:var(--radius);border:2px solid var(--grey-border);background:#fff;
+  font-weight:800;font-size:16px;color:var(--navy);cursor:pointer;text-align:center;
+}
+.area-tile.selected{border-color:var(--navy);background:var(--navy-tint);}
+
+.checklist-item{border:1.5px solid var(--grey-border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fbfbfc;}
+.checklist-item .qnum{font-size:11px;color:var(--maroon);font-weight:800;letter-spacing:0.4px;}
+.checklist-item .qtext{font-size:14.5px;font-weight:600;margin:3px 0 10px;color:var(--text);}
+.answer-pills{display:flex;gap:8px;}
+.pill-btn{flex:1;padding:11px 4px;border-radius:9px;border:1.5px solid var(--grey-border);background:#fff;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--text-soft);}
+.pill-btn.yes.active{background:var(--success);border-color:var(--success);color:#fff;}
+.pill-btn.no.active{background:var(--danger);border-color:var(--danger);color:#fff;}
+.pill-btn.na.active{background:var(--grey-mid);border-color:var(--grey-mid);color:#fff;}
+
+.progress-wrap{background:var(--grey-border);border-radius:20px;height:8px;margin-bottom:16px;overflow:hidden;}
+.progress-bar{height:100%;background:var(--navy);border-radius:20px;transition:width .2s ease;}
+
+.status-chip{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:800;letter-spacing:0.2px;}
+.status-chip.submitted{background:var(--success-tint);color:var(--success);}
+.status-chip.draft{background:var(--warning-tint);color:var(--warning);}
+.status-chip.missing{background:var(--danger-tint);color:var(--danger);}
+
+.compliance-badge{font-size:34px;font-weight:900;color:var(--navy);}
+.compliance-ring{width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:8px solid var(--grey-border);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;background:var(--navy-tint);color:var(--navy);padding:9px 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;position:sticky;top:0;}
+td{padding:9px 8px;border-bottom:1px solid var(--grey-border);vertical-align:middle;}
+.table-wrap{overflow-x:auto;border:1px solid var(--grey-border);border-radius:12px;margin-bottom:14px;}
+
+.tab-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;}
+.tab-btn{flex-shrink:0;padding:9px 14px;border-radius:20px;border:1.5px solid var(--grey-border);background:#fff;font-weight:700;font-size:12.5px;cursor:pointer;color:var(--text-soft);}
+.tab-btn.active{background:var(--maroon);border-color:var(--maroon);color:#fff;}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.stat-card{background:#fff;border:1px solid var(--grey-border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
+.stat-card .num{font-size:26px;font-weight:900;color:var(--navy);}
+.stat-card .lbl{font-size:11.5px;color:var(--text-soft);font-weight:700;text-transform:uppercase;margin-top:2px;}
+.stat-card.maroon .num{color:var(--maroon);}
+
+.rank-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--grey-border);border-radius:12px;margin-bottom:8px;background:#fff;}
+.rank-medal{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff;flex-shrink:0;}
+.rank-1{background:#c9962c;}
+.rank-2{background:#9aa1ac;}
+.rank-3{background:#a3672f;}
+.rank-other{background:var(--navy);}
+.rank-worst-1{background:var(--danger);}
+.rank-worst-2{background:#d97757;}
+.rank-worst-3{background:#e0a25e;}
+.stat-card.sort-active{outline:2.5px solid var(--navy);outline-offset:-2px;}
+.stat-card.maroon.sort-active{outline-color:var(--danger);}
+.rank-info{flex:1;min-width:0;}
+.rank-info .name{font-weight:700;font-size:14px;}
+.rank-info .meta{font-size:11.5px;color:var(--text-soft);}
+.rank-score{font-weight:900;font-size:16px;color:var(--navy);}
+
+.banner{padding:12px 14px;border-radius:12px;font-size:13.5px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.banner.warn{background:var(--warning-tint);color:var(--warning);}
+.banner.info{background:var(--navy-tint);color:var(--navy);}
+.banner.ok{background:var(--success-tint);color:var(--success);}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-soft);}
+.empty-state .big-icon{font-size:38px;margin-bottom:10px;}
+
+.back-link{background:none;border:none;color:var(--white);font-size:20px;cursor:pointer;padding:4px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,20,30,0.55);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
+.modal-sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px;max-height:85vh;overflow-y:auto;}
+.modal-sheet h3{margin-top:0;color:var(--navy);}
+.tl-pick{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1.5px solid var(--grey-border);border-radius:12px;margin-bottom:10px;cursor:pointer;}
+.tl-pick:active{background:var(--navy-tint);}
+.tl-pick .n{font-weight:700;font-size:14.5px;}
+.tl-pick .m{font-size:12px;color:var(--text-soft);}
+.footer-note{text-align:center;font-size:11px;color:var(--grey-mid);margin-top:20px;padding-bottom:6px;}
+.search-box{position:relative;margin-bottom:14px;}
+.icon-input{padding-left:38px;}
+.search-box::before{content:"🔍";position:absolute;left:13px;top:13px;font-size:14px;opacity:0.5;}
+.chip-filter{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.action-icon-btn{background:var(--grey-bg);border:none;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:13px;margin-right:4px;}
+.divider{height:1px;background:var(--grey-border);margin:18px 0;}
+::-webkit-scrollbar{height:4px;width:4px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ===================== CONFIG / DATA ===================== */
+const LOGO_SRC = "data:image/png;base64,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";
+const AREAS = ["ADNOC","ENOC","EMARAT","CIVIL"];
+const AREA_COLORS = {ADNOC:"#2E86C1", ENOC:"#D32F2F", EMARAT:"#43A047", CIVIL:"#B8860B"};
+const CHECKLIST = [
+  {id:"c1", label:"PTW & MSRA Available at Site"},
+  {id:"c3", label:"PPE (Hard Hat, Safety Shoe, Cover All)"},
+  {id:"c4", label:"Tool Box Talk (TBT)"},
+  {id:"c5", label:"Area Barricaded"},
+  {id:"c6", label:"Lanyard for Tools and Safety Harness Used"},
+  {id:"c7", label:"Are Materials Stacked Properly"},
+  {id:"c8", label:"Safe Work at Height Access/Platform (Ladder, Scaffold, MEWP) Used"},
+  {id:"c9", label:"Ensure Area is Clear from Materials & Debris After Work"},
+  {id:"c10", label:"Fire Extinguisher / First Aid Box Available"}
+];
+const HSE_NAMES = ["Sharan","Sayed","Sadik","Arhaam","Nithin"];
+const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours from when a report is first started
+
+/* ===================== SUPABASE (REAL DATABASE) =====================
+   1. Create a free project at https://supabase.com
+   2. Run the SQL from the setup guide to create the kv_store table
+   3. Paste your Project URL and anon public key below
+*/
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+let sb = null;
+let dbReady = false;
+try{
+  if(SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_") && window.supabase){
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    dbReady = true;
+  }
+}catch(e){ console.error("Supabase init failed", e); dbReady = false; }
+
+/* ===================== STORAGE HELPERS (backed by shared Supabase kv_store table) =====================
+   NAMESPACED: this app (JGM) prefixes every key with "jgm:" so its data can
+   share the same kv_store table as the Joseph Group and JA Installation apps
+   without ever colliding with their keys. */
+const APP_NS = "jgm:";
+async function storGet(key){
+  if(!dbReady) return null;
+  try{
+    const {data, error} = await sb.from("kv_store").select("value").eq("key", APP_NS+key).maybeSingle();
+    if(error) throw error;
+    return data ? data.value : null;
+  }catch(e){ console.error("storGet failed", key, e); return null; }
+}
+async function storSet(key, val){
+  if(!dbReady) return false;
+  try{
+    const {error} = await sb.from("kv_store").upsert({key: APP_NS+key, value: val, updated_at: new Date().toISOString()});
+    if(error) throw error;
+    return true;
+  }catch(e){ console.error("storSet failed", key, e); return false; }
+}
+async function storDelete(key){
+  if(!dbReady) return false;
+  try{
+    const {error} = await sb.from("kv_store").delete().eq("key", APP_NS+key);
+    if(error) throw error;
+    return true;
+  }catch(e){ console.error("storDelete failed", key, e); return false; }
+}
+async function storList(prefix){
+  if(!dbReady) return [];
+  try{
+    const {data, error} = await sb.from("kv_store").select("key").like("key", APP_NS+prefix + "%");
+    if(error) throw error;
+    return data ? data.map(r=>r.key.slice(APP_NS.length)) : [];
+  }catch(e){ console.error("storList failed", prefix, e); return []; }
+}
+function sanitizeMobile(m){ return (m||"").replace(/[^0-9+]/g,""); }
+function tlKey(mobile){ return "tl:" + sanitizeMobile(mobile); }
+function rptKey(date, mobile, area){ return "rpt:" + date + ":" + sanitizeMobile(mobile) + ":" + area; }
+function parseRptKey(key){
+  const parts = key.split(":");
+  return {date: parts[1], mobile: parts[2], area: parts.slice(3).join(":")};
+}
+function todayStr(){ const d = new Date(); return d.toISOString().slice(0,10); }
+function fmtDate(str){
+  const d = new Date(str+"T00:00:00");
+  return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+}
+function nowIso(){ return new Date().toISOString(); }
+
+/* ===================== APP STATE ===================== */
+let state = {
+  screen: "loading",
+  currentTL: null,
+  selectedArea: null,
+  answers: {},
+  manpower: "",
+  comments: "",
+  activeReportDate: null,
+  reportLocked: false,
+  lockedPreview: null,
+  reportExpiresAt: null,
+  editingExisting: false,
+  hseUser: null,
+  hseTab: "overview",
+  toast: null,
+  reportsFilter: {range:"today", area:"all", tl:"all", status:"all", customFrom:"", customTo:""},
+  perfFilter: {range:"30", area:"all"},
+  perfSortOrder: "best",
+  missingDate: todayStr(),
+  tlSearch: "",
+  reportSearch: "",
+  modal: null,
+  drawerOpen: false,
+  hsePinSelected: "",
+  overviewTrendDays: 15
+};
+
+function setState(patch){ state = {...state, ...patch}; render(); }
+
+/* ===================== COMPLIANCE CALC ===================== */
+function calcCompliance(answers){
+  const vals = Object.values(answers).filter(v=>v);
+  const yes = vals.filter(v=>v==="Yes").length;
+  const no = vals.filter(v=>v==="No").length;
+  const total = yes+no;
+  if(total===0) return null;
+  return Math.round((yes/total)*100);
+}
+function isComplete(answers){
+  return CHECKLIST.every(item => answers[item.id]);
+}
+
+/* ===================== ICONS (inline svg-ish emoji-free) ===================== */
+const ICON = {
+  leader:"👷", hse:"🦺", back:"←", check:"✓", cross:"✕", bell:"🔔",
+  chart:"📊", people:"👥", list:"📋", trophy:"🏆", warn:"⚠", trash:"🗑",
+  edit:"✎", plus:"+", search:"🔍", download:"⬇", logout:"⎋"
+};
+const SVG = {
+  hamburger:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+  home:`<svg class="di-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,
+  clipboard:`<svg class="di-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg>`,
+  doc:`<svg class="di-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l4 4v14H7z"/><line x1="10" y1="12" x2="15" y2="12"/><line x1="10" y1="16" x2="15" y2="16"/></svg>`,
+  lock:`<svg class="di-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
+  chevR:`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>`,
+  calendar:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>`,
+  building:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="1"/><line x1="9" y1="7" x2="9" y2="7.01"/><line x1="15" y1="7" x2="15" y2="7.01"/><line x1="9" y1="11" x2="9" y2="11.01"/><line x1="15" y1="11" x2="15" y2="11.01"/><line x1="9" y1="15" x2="9" y2="15.01"/><line x1="15" y1="15" x2="15" y2="15.01"/></svg>`,
+  clipIcon:`<svg class="di-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>`,
+  refresh:`<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>`,
+  exit:`<svg class="di-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`
+};
+
+/* ===================== RENDER ROOT ===================== */
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = screenTemplate();
+  bindScreenEvents();
+}
+
+function screenTemplate(){
+  switch(state.screen){
+    case "loading": return tplLoading();
+    case "role": return tplRole();
+    case "tl_identify": return wrapTL(tplTLIdentify(), "Site Team Leader", true);
+    case "tl_register": return wrapTL(tplTLRegister(), "New Registration", true);
+    case "tl_home": return wrapTL(tplTLHome(), state.currentTL ? state.currentTL.name : "Home", false);
+    case "tl_area": return wrapTL(tplTLArea(), "Select Area", true);
+    case "tl_form": return wrapTL(tplTLForm(), state.selectedArea + " Inspection", true);
+    case "tl_review": return wrapTL(tplTLReview(), "Review & Submit", true);
+    case "tl_success": return wrapTL(tplTLSuccess(), "Submitted", false);
+    case "tl_reports": return wrapTL(tplTLReports(), "My Reports", true);
+    case "hse_pin": return tplHSEPin();
+    case "hse_dash": return tplHSEDash();
+    default: return tplLoading();
+  }
+}
+
+function wrapTL(inner, title, showBack){
+  const stepScreens = ["tl_area","tl_form","tl_review"];
+  const isStep = stepScreens.includes(state.screen);
+  const preLogin = !state.currentTL;
+  const leftBtn = preLogin
+    ? `<button class="icon-btn" data-act="back">${ICON.back}</button>`
+    : `<button class="hamburger-btn" data-act="open-drawer">${SVG.hamburger}</button>`;
+  let rightActions = `<button class="icon-btn" data-act="refresh" title="Refresh">${SVG.refresh}</button>`;
+  if(isStep){
+    rightActions += `<button class="icon-btn" data-act="save-exit">Save &amp; Exit</button>`;
+  } else if(state.screen==="tl_reports"){
+    rightActions += `<button class="icon-btn" data-act="back">${ICON.back}</button>`;
+  } else if(!preLogin){
+    rightActions += `<button class="icon-btn" data-act="switch-profile" title="Back to Login">${SVG.exit}</button>`;
+  }
+  return `
+  <div class="topbar">
+    ${leftBtn}
+    <img src="${LOGO_SRC}" class="logo-sm" alt="JGM"/>
+    <div>
+      <div class="title">${title}</div>
+      <div class="sub">JGM Safety Inspection</div>
+    </div>
+    <div class="spacer"></div>
+    ${rightActions}
+  </div>
+  <div class="content">${inner}</div>
+  ${(!preLogin && state.drawerOpen) ? drawerTemplate() : ""}
+  `;
+}
+
+function drawerTemplate(){
+  const items = [
+    {key:"home", icon:SVG.home, label:"Home", act:"drawer-home"},
+    {key:"new", icon:SVG.clipboard, label:"New Inspection", act:"drawer-new-inspection"},
+    {key:"reports", icon:SVG.doc, label:"My Reports", act:"drawer-my-reports"},
+    {key:"switch", icon:SVG.exit, label:"Back to Login / Switch Profile", act:"drawer-switch-profile"},
+    {key:"hse", icon:SVG.lock, label:"Dashboard (HSE Team Only)", act:"drawer-hse", locked:true}
+  ];
+  return `
+  <div class="drawer-overlay" data-act="close-drawer">
+    <div class="drawer-panel" onclick="event.stopPropagation()">
+      <div class="drawer-header">
+        <img src="${LOGO_SRC}" alt="JGM"/>
+        <button class="drawer-close-btn" data-act="close-drawer">${ICON.cross}</button>
+      </div>
+      <div class="drawer-menu">
+        ${items.map(it=>`
+          <div class="drawer-item ${it.locked?'locked':''} ${state.screen==='tl_'+it.key?'active-item':''}" data-act="${it.act}">
+            ${it.icon}
+            <span>${it.label}</span>
+            <span class="di-chev">${SVG.chevR}</span>
+          </div>`).join("")}
+      </div>
+      <div class="drawer-footer">Joseph General Maintenance — HSE Department</div>
+    </div>
+  </div>`;
+}
+
+/* ===================== LOADING ===================== */
+function tplLoading(){
+  return `<div class="center-screen"><img src="${LOGO_SRC}" class="logo-big"/><p class="brand-sub">Loading…</p></div>`;
+}
+
+/* ===================== ROLE SELECT ===================== */
+function tplRole(){
+  return `
+  <div class="cover-bg">
+  <div class="center-screen cover-content">
+    <div class="logo-badge"><img src="${LOGO_SRC}" class="logo-big"/></div>
+    <h1 class="brand-title">JGM Site Safety<br/>Inspection Report</h1>
+    <p class="brand-sub">ADNOC · ENOC · EMARAT · CIVIL</p>
+    <div class="role-stack">
+      <button class="big-btn navy" data-act="go-tl">
+        <span class="emoji">${ICON.leader}</span>
+        <span>Site Team Leader<small>Register or log in to submit today's inspection</small></span>
+      </button>
+      <button class="big-btn maroon" data-act="go-hse">
+        <span class="emoji">${ICON.hse}</span>
+        <span>HSE Team<small>Admin dashboard — reports, performance, data</small></span>
+      </button>
+    </div>
+  </div>
+  </div>`;
+}
+
+/* ===================== TEAM LEADER: IDENTIFY ===================== */
+let cachedTLs = [];
+async function loadAllTLs(){
+  const keys = await storList("tl:");
+  const vals = await Promise.all(keys.map(k=>storGet(k)));
+  cachedTLs = vals.filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+  return cachedTLs;
+}
+function tplTLIdentify(){
+  return `
+  <p class="brand-sub" style="margin-bottom:16px;text-align:left;">Registered already? Select your name from the dropdown below. First time here? Register once — your name becomes your permanent Sub-Team identity.</p>
+  <div class="card">
+    <label class="field-label">Select Your Registered Name</label>
+    <select id="tlSelect">
+      <option value="">${cachedTLs.length===0 ? "-- No Team Leaders registered yet --" : "-- Select Team Leader --"}</option>
+      ${cachedTLs.map(t=>`<option value="${t.mobile}">${escapeHtml(t.name)} (ID: ${escapeHtml(t.employeeId)})</option>`).join("")}
+    </select>
+    <button class="btn primary" style="margin-top:14px;" data-act="tl-select-continue">Continue to Today's Inspection</button>
+  </div>
+  <div class="divider"></div>
+  <button class="btn outline" data-act="go-register">${ICON.plus} Register as New Team Leader</button>
+  `;
+}
+
+function tplTLRegister(){
+  return `
+  <div class="card">
+    <h3>One-Time Registration</h3>
+    <label class="field-label">Team Leader Full Name</label>
+    <input type="text" id="regName" placeholder="e.g. Ahmed Khan"/>
+    <label class="field-label">Employee ID (exactly 5 digits)</label>
+    <input type="text" id="regEmpId" placeholder="e.g. 10425" inputmode="numeric" maxlength="5"/>
+    <label class="field-label">Mobile Number (exactly 10 digits)</label>
+    <input type="tel" id="regMobile" placeholder="e.g. 0501234567" inputmode="numeric" maxlength="10"/>
+    <div class="banner warn" style="margin-top:16px;">${ICON.warn} Your name becomes your permanent Sub-Team identity and can never be changed after this. Name, Employee ID and Mobile Number must all be unique — none can match an existing Team Leader.</div>
+    <button class="btn maroon" style="margin-top:8px;" data-act="submit-register">Complete Registration</button>
+  </div>`;
+}
+
+/* ===================== TEAM LEADER: HOME ===================== */
+function tplTLHome(){
+  return `<div id="tlHomeWrap"><div class="center-screen" style="min-height:30vh;"><p class="brand-sub">Loading today's status…</p></div></div>`;
+}
+const AREA_META = {
+  ADNOC:{cls:"adnoc", icon:SVG.building},
+  ENOC:{cls:"enoc", icon:SVG.building},
+  EMARAT:{cls:"emarat", icon:SVG.building},
+  CIVIL:{cls:"civil", icon:SVG.building}
+};
+function areaBadge(rep){
+  if(!rep) return "";
+  if(rep.status==="submitted") return `<span class="tile-badge submitted">${ICON.check}</span>`;
+  return `<span class="tile-badge draft">Draft</span>`;
+}
+async function renderTLHomeAsync(){
+  if(state.screen !== "tl_home") return;
+  const mobile = sanitizeMobile(state.currentTL.mobile);
+  const today = todayStr();
+  const yest = yesterdayStr();
+  const todayKeys = await storList("rpt:" + today + ":" + mobile + ":");
+  const yestKeys = await storList("rpt:" + yest + ":" + mobile + ":");
+  const relevantReports = (await Promise.all([...todayKeys, ...yestKeys].map(k=>storGet(k)))).filter(Boolean);
+  const todayByArea = {};
+  AREAS.forEach(a=>{
+    const candidates = relevantReports.filter(r=>r.area===a);
+    const active = candidates.find(r=>!isExpired(r)) || null;
+    todayByArea[a] = active;
+  });
+  const submittedCount = AREAS.filter(a=>todayByArea[a] && todayByArea[a].status==="submitted").length;
+  const wrap = document.getElementById("tlHomeWrap");
+  if(!wrap) return;
+
+  // rolling personal average compliance (last 7 submitted reports, any area, any date)
+  const allKeys = await storList("rpt:");
+  const mine = allKeys.filter(k=>parseRptKey(k).mobile === mobile);
+  const myReports = (await Promise.all(mine.map(k=>storGet(k)))).filter(r=>r && r.status==="submitted" && r.compliance!==null).sort((a,b)=>b.date.localeCompare(a.date));
+  const recent = myReports.slice(0,7);
+  const avgCompliance = recent.length ? Math.round(recent.reduce((a,r)=>a+r.compliance,0)/recent.length) : null;
+
+  // any open (unsubmitted) drafts expiring within 2 hours?
+  const soonMs = 2*60*60*1000;
+  const expiringSoon = AREAS.filter(a=>{
+    const r = todayByArea[a];
+    return r && r.status==="draft" && r.expiresAt && (Date.parse(r.expiresAt) - Date.now()) < soonMs;
+  });
+
+  let banner = "";
+  if(expiringSoon.length > 0){
+    banner = `<div class="banner warn">${ICON.bell} ${expiringSoon.join(", ")} draft${expiringSoon.length>1?'s':''} will lock soon — you have 24 hours from when you started each one to submit it.</div>`;
+  } else if(submittedCount===0){
+    banner = `<div class="banner info">${ICON.bell} Reminder: you have 24 hours from when you start an inspection to submit it, after which it locks automatically.</div>`;
+  } else if(submittedCount < AREAS.length){
+    banner = `<div class="banner ok">${ICON.check} ${submittedCount} of ${AREAS.length} areas submitted. Tap another area below if you inspected more than one location.</div>`;
+  } else {
+    banner = `<div class="banner ok">${ICON.check} All areas submitted. Each report stays editable for 24 hours from when you started it.</div>`;
+  }
+
+  const dateLabel = new Date().toLocaleDateString("en-GB",{weekday:"long", day:"numeric", month:"long", year:"numeric"});
+
+  wrap.innerHTML = `
+    ${banner}
+    <div class="home-hero">
+      <div class="hero-date">${SVG.calendar} ${dateLabel}</div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hlbl">Submitted Today</div>
+          <div class="hnum">${submittedCount}/${AREAS.length}</div>
+        </div>
+        <div class="hero-divider"></div>
+        <div class="hstat">
+          <div class="hlbl">Avg Compliance</div>
+          <div class="hnum">${avgCompliance===null ? '—' : avgCompliance+'%'}</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="start-inspection-btn" data-act="start-inspection">
+      ${SVG.clipIcon.replace('class="di-icon"','class="si-icon"')}
+      <span>${submittedCount>0 ? "Add / Edit an Inspection" : "Start Today's Inspection"}</span>
+      <span class="si-chev">${SVG.chevR}</span>
+    </button>
+
+    <div class="section-label">Work Areas — tap to start or edit that area's report</div>
+    <div class="area-grid" style="margin-bottom:18px;">
+      ${AREAS.map(a=>`
+        <button class="area-tile-v2 ${AREA_META[a].cls}" data-act="pick-area" data-area="${a}" style="position:relative;">
+          ${areaBadge(todayByArea[a])}
+          ${AREA_META[a].icon} <span>${a}</span>
+        </button>`).join("")}
+    </div>
+
+    <div class="brand-footer-card">
+      <img src="${LOGO_SRC}" alt="JGM"/>
+      <div class="bf-title">Daily Site Safety Inspection Report</div>
+      <div class="bf-ref">Ref: IMS/JG/HSE/FRM_036/R00</div>
+    </div>
+  `;
+  bindDynamicEvents();
+}
+
+/* ===================== TEAM LEADER: AREA SELECT ===================== */
+function tplTLArea(){
+  return `
+  <p class="brand-sub" style="text-align:left;margin-bottom:14px;">Which area are you inspecting today?</p>
+  <div class="area-grid">
+    ${AREAS.map(a=>`
+      <button class="area-tile-v2 ${AREA_META[a].cls}" data-act="pick-area" data-area="${a}">
+        ${AREA_META[a].icon} <span>${a}</span>
+      </button>`).join("")}
+  </div>
+  `;
+}
+
+/* ===================== TEAM LEADER: FORM ===================== */
+function formatRemaining(ms){
+  if(ms<=0) return "expired";
+  const totalMin = Math.floor(ms/60000);
+  const h = Math.floor(totalMin/60);
+  const m = totalMin%60;
+  return `${h}h ${m}m`;
+}
+function tplTLForm(){
+  if(state.reportLocked){
+    const p = state.lockedPreview;
+    return `
+    <div class="banner warn">${ICON.warn} This ${state.selectedArea} report started on ${p ? fmtDate(p.date) : ''} and its 24-hour edit window has expired. It is now locked and can no longer be edited by you — contact HSE if changes are needed.</div>
+    <div class="card">
+      <h3>${state.selectedArea} — Locked Report (started ${p?fmtDate(p.date):''})</h3>
+      ${p ? `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--grey-border);font-size:13.5px;"><span>Man Power</span><b>${p.manpower===null||p.manpower===undefined?'—':p.manpower}</b></div>
+        ${CHECKLIST.map(item=>`
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--grey-border);font-size:13px;">
+          <span>${item.label}</span><b>${(p.answers && p.answers[item.id]) || '—'}</b>
+        </div>`).join("")}
+        <div style="margin-top:10px;"><span class="status-chip ${p.status==='submitted'?'submitted':'missing'}">${p.status==='submitted'?'WAS SUBMITTED':'NEVER SUBMITTED'}</span></div>
+      ` : ""}
+    </div>
+    <button class="btn primary" data-act="pick-area" data-area="${state.selectedArea}">Start a New ${state.selectedArea} Report</button>
+    `;
+  }
+  const answered = CHECKLIST.filter(i=>state.answers[i.id]).length + (state.manpower!=="" && state.manpower!==null ? 1 : 0);
+  const totalFields = CHECKLIST.length + 1;
+  const pct = Math.round((answered/totalFields)*100);
+  return `
+  <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;"></div></div>
+  <div style="font-size:12px;color:var(--text-soft);margin-bottom:14px;">${answered} of ${totalFields} items answered · Area: <b>${state.selectedArea}</b> · Auto-saving draft</div>
+  ${state.reportExpiresAt ? `<div class="banner info" style="margin-bottom:14px;">${ICON.bell} Time remaining to submit: <b>${formatRemaining(Date.parse(state.reportExpiresAt) - Date.now())}</b> (24h window from when you started this report)</div>` : ""}
+  <div class="checklist-item">
+    <div class="qnum">MAN POWER</div>
+    <div class="qtext">Number of workers on site</div>
+    <input type="number" min="0" step="1" id="manpowerInput" placeholder="e.g. 8" value="${escapeHtml(state.manpower)}" inputmode="numeric"/>
+  </div>
+  ${CHECKLIST.map((item,idx)=>`
+    <div class="checklist-item">
+      <div class="qnum">ITEM ${idx+1}</div>
+      <div class="qtext">${item.label}</div>
+      <div class="answer-pills">
+        <button class="pill-btn yes ${state.answers[item.id]==='Yes'?'active':''}" data-act="answer" data-id="${item.id}" data-val="Yes">Yes</button>
+        <button class="pill-btn no ${state.answers[item.id]==='No'?'active':''}" data-act="answer" data-id="${item.id}" data-val="No">No</button>
+        <button class="pill-btn na ${state.answers[item.id]==='N/A'?'active':''}" data-act="answer" data-id="${item.id}" data-val="N/A">N/A</button>
+      </div>
+    </div>`).join("")}
+  <label class="field-label">Comments (optional)</label>
+  <textarea id="tlComments" placeholder="Any observations or notes...">${escapeHtml(state.comments)}</textarea>
+  <button class="btn primary" style="margin-top:18px;" data-act="go-review" ${answered<totalFields?"disabled":""}>
+    Review Inspection
+  </button>
+  ${answered<totalFields ? `<div style="text-align:center;font-size:12px;color:var(--text-soft);margin-top:8px;">Fill in Man Power and answer all ${CHECKLIST.length} items to continue</div>` : ""}
+  `;
+}
+
+/* ===================== TEAM LEADER: REVIEW ===================== */
+function tplTLReview(){
+  const compliance = calcCompliance(state.answers);
+  return `
+  <div class="card" style="text-align:center;">
+    <div style="font-size:12px;color:var(--text-soft);text-transform:uppercase;font-weight:700;">Estimated Compliance</div>
+    <div class="compliance-badge">${compliance===null?'—':compliance+'%'}</div>
+  </div>
+  <div class="card">
+    <h3>${state.selectedArea} — ${escapeHtml(state.currentTL.name)}</h3>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--grey-border);font-size:13.5px;">
+      <span>Man Power</span><b>${escapeHtml(state.manpower)}</b>
+    </div>
+    ${CHECKLIST.map(item=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--grey-border);font-size:13.5px;">
+        <span>${item.label}</span>
+        <b style="color:${state.answers[item.id]==='Yes'?'var(--success)':state.answers[item.id]==='No'?'var(--danger)':'var(--grey-mid)'}">${state.answers[item.id]}</b>
+      </div>`).join("")}
+    ${state.comments ? `<div style="margin-top:12px;font-size:13px;"><b>Comments:</b> ${escapeHtml(state.comments)}</div>` : ""}
+  </div>
+  <div class="btn-row">
+    <button class="btn outline" data-act="back-to-form">${ICON.edit} Edit Answers</button>
+    <button class="btn success" data-act="submit-inspection">${ICON.check} Confirm & Submit</button>
+  </div>
+  `;
+}
+
+/* ===================== TEAM LEADER: SUCCESS ===================== */
+function tplTLSuccess(){
+  const compliance = calcCompliance(state.answers);
+  return `
+  <div class="center-screen" style="min-height:60vh;">
+    <div style="font-size:60px;">${ICON.check}</div>
+    <h1 class="brand-title">Inspection Submitted</h1>
+    <p class="brand-sub">${state.selectedArea} — ${compliance===null?'N/A':compliance+'% compliance'}</p>
+    <button class="btn primary" data-act="go-tl-home">Back to Home</button>
+  </div>`;
+}
+
+/* ===================== TEAM LEADER: MY REPORTS ===================== */
+function tplTLReports(){
+  return `<div id="myReportsWrap"><p class="brand-sub">Loading…</p></div>`;
+}
+async function renderMyReportsAsync(){
+  if(state.screen !== "tl_reports") return;
+  const mobile = sanitizeMobile(state.currentTL.mobile);
+  const keys = await storList("rpt:");
+  const mine = keys.filter(k=>parseRptKey(k).mobile === mobile);
+  const reports = (await Promise.all(mine.map(k=>storGet(k)))).filter(Boolean).sort((a,b)=>b.date.localeCompare(a.date) || a.area.localeCompare(b.area));
+  const wrap = document.getElementById("myReportsWrap");
+  if(!wrap) return;
+  wrap.innerHTML = reports.length===0 ? `<div class="empty-state"><div class="big-icon">${ICON.list}</div>No reports submitted yet.</div>` :
+    reports.map(r=>{
+      const displayStatus = (r.status==="draft" && isExpired(r)) ? "expired" : r.status;
+      const chipClass = displayStatus==="expired" ? "missing" : displayStatus;
+      return `
+      <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:700;">${fmtDate(r.date)} — ${r.area}</div>
+            <span class="status-chip ${chipClass}">${displayStatus.toUpperCase()}</span>
+          </div>
+          <div class="compliance-badge" style="font-size:20px;">${r.compliance===null?'—':r.compliance+'%'}</div>
+        </div>
+      </div>`;
+    }).join("");
+  bindDynamicEvents();
+}
+
+/* ===================== HSE: PIN ENTRY ===================== */
+let hsePinStatuses = {};
+async function loadHsePinStatuses(){
+  const results = await Promise.all(HSE_NAMES.map(n=>storGet(hsePinKey(n))));
+  HSE_NAMES.forEach((n,i)=>{ hsePinStatuses[n] = !!(results[i] && results[i].pin); });
+  return hsePinStatuses;
+}
+function hsePinKey(name){ return "hsepin:" + name; }
+function tplHSEPin(){
+  const selected = state.hsePinSelected;
+  const hasPin = selected ? !!hsePinStatuses[selected] : null;
+  return `
+  <div class="topbar">
+    <button class="back-link" data-act="back">${ICON.back}</button>
+    <div><div class="title">HSE Team Access</div><div class="sub">JGM Site Safety Inspection</div></div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <label class="field-label">Your Name</label>
+      <select id="hseName">
+        <option value="">-- Select your name --</option>
+        ${HSE_NAMES.map(n=>`<option value="${n}" ${selected===n?'selected':''}>${n}${hsePinStatuses[n]===false?' (PIN not set up yet)':''}</option>`).join("")}
+      </select>
+      ${selected ? (hasPin ? `
+        <label class="field-label">Enter Your 4-Digit PIN</label>
+        <input type="text" id="hsePinInput" inputmode="numeric" maxlength="4" placeholder="••••"/>
+        <div id="hsePinError" style="color:var(--danger);font-size:13px;margin-top:8px;"></div>
+        <button class="btn maroon" style="margin-top:14px;" data-act="hse-login">Access Dashboard</button>
+      ` : `
+        <div class="banner info" style="margin-top:14px;">${ICON.warn} No PIN set up yet for ${escapeHtml(selected)}. Create your own private 4-digit PIN now — you'll use it every time you log in.</div>
+        <label class="field-label">Create a 4-Digit PIN</label>
+        <input type="text" id="hsePinNew" inputmode="numeric" maxlength="4" placeholder="••••"/>
+        <label class="field-label">Confirm PIN</label>
+        <input type="text" id="hsePinConfirm" inputmode="numeric" maxlength="4" placeholder="••••"/>
+        <div id="hsePinError" style="color:var(--danger);font-size:13px;margin-top:8px;"></div>
+        <button class="btn maroon" style="margin-top:14px;" data-act="hse-setup-pin">Save PIN &amp; Access Dashboard</button>
+      `) : `<div style="font-size:12.5px;color:var(--text-soft);margin-top:10px;">Select your name to continue.</div>`}
+    </div>
+  </div>`;
+}
+
+/* ===================== HSE: DASHBOARD ===================== */
+function tplHSEDash(){
+  return `
+  <div class="topbar">
+    <img src="${LOGO_SRC}" alt="JGM"/>
+    <div><div class="title">HSE Dashboard</div><div class="sub">Logged in as ${state.hseUser}</div></div>
+    <div class="spacer"></div>
+    <button class="icon-btn" data-act="refresh" title="Refresh">${SVG.refresh}</button>
+    <button class="icon-btn" data-act="hse-logout">${ICON.logout}</button>
+  </div>
+  <div class="content">
+    <div class="tab-row">
+      <button class="tab-btn ${state.hseTab==='overview'?'active':''}" data-act="hse-tab" data-tab="overview">${ICON.chart} Overview</button>
+      <button class="tab-btn ${state.hseTab==='team'?'active':''}" data-act="hse-tab" data-tab="team">${ICON.people} Team Leaders</button>
+      <button class="tab-btn ${state.hseTab==='reports'?'active':''}" data-act="hse-tab" data-tab="reports">${ICON.list} Reports</button>
+      <button class="tab-btn ${state.hseTab==='performance'?'active':''}" data-act="hse-tab" data-tab="performance">${ICON.trophy} Performance</button>
+      <button class="tab-btn ${state.hseTab==='missing'?'active':''}" data-act="hse-tab" data-tab="missing">${ICON.warn} Missing</button>
+      <button class="tab-btn ${state.hseTab==='data'?'active':''}" data-act="hse-tab" data-tab="data">${ICON.trash} Data</button>
+    </div>
+    <div id="hseTabContent"><p class="brand-sub">Loading…</p></div>
+  </div>`;
+}
+
+async function renderHseTabAsync(){
+  const el = document.getElementById("hseTabContent");
+  if(!el) return;
+  if(state.hseTab === "overview"){ el.innerHTML = await tplHseOverview(); drawOverviewCharts(); }
+  else if(state.hseTab === "team") el.innerHTML = await tplHseTeam();
+  else if(state.hseTab === "reports") el.innerHTML = await tplHseReports();
+  else if(state.hseTab === "performance"){ el.innerHTML = await tplHsePerformance(); drawPerformanceChart(); }
+  else if(state.hseTab === "missing") el.innerHTML = await tplHseMissing();
+  else if(state.hseTab === "data") el.innerHTML = await tplHseData();
+  bindDynamicEvents();
+}
+
+/* ---- Overview ---- */
+const chartInstances = {};
+function destroyChart(id){ if(chartInstances[id]){ chartInstances[id].destroy(); delete chartInstances[id]; } }
+let chartData = {};
+
+async function tplHseOverview(){
+  const tls = await loadAllTLs();
+  const rptKeys = await storList("rpt:");
+  const today = todayStr();
+  const todayKeys = rptKeys.filter(k=>k.startsWith("rpt:"+today+":"));
+  const todayReports = (await Promise.all(todayKeys.map(k=>storGet(k)))).filter(Boolean);
+  const submittedToday = todayReports.filter(r=>r.status==="submitted").length;
+  const allReports = (await Promise.all(rptKeys.map(k=>storGet(k)))).filter(r=>r && r.status==="submitted");
+  const compliances = allReports.map(r=>r.compliance).filter(c=>c!==null);
+  const avgCompliance = compliances.length ? Math.round(compliances.reduce((a,b)=>a+b,0)/compliances.length) : null;
+  const missingToday = Math.max(tls.length - submittedToday, 0);
+
+  // area-wise average compliance (all-time) + submission counts
+  const areaAgg = {};
+  AREAS.forEach(a=>areaAgg[a]={total:0,count:0});
+  allReports.forEach(r=>{ if(r.compliance!==null && areaAgg[r.area]){ areaAgg[r.area].total+=r.compliance; areaAgg[r.area].count+=1; } });
+  const areaLabels = AREAS;
+  const areaValues = AREAS.map(a=> areaAgg[a].count ? Math.round(areaAgg[a].total/areaAgg[a].count) : 0);
+  const areaCounts = AREAS.map(a=> areaAgg[a].count);
+
+  // compliance trend — selectable window
+  const trendDays = state.overviewTrendDays || 15;
+  const trendLabels = [], trendValues = [];
+  for(let i=trendDays-1;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const dstr = d.toISOString().slice(0,10);
+    const dayReports = allReports.filter(r=>r.date===dstr && r.compliance!==null);
+    const v = dayReports.length ? Math.round(dayReports.reduce((a,r)=>a+r.compliance,0)/dayReports.length) : null;
+    trendLabels.push(d.toLocaleDateString("en-GB",{day:"2-digit",month:"short"}));
+    trendValues.push(v);
+  }
+
+  chartData.overview = {submittedToday, missingToday, areaLabels, areaValues, areaCounts, trendLabels, trendValues};
+
+  return `
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">${tls.length}</div><div class="lbl">Team Leaders</div></div>
+    <div class="stat-card maroon"><div class="num">${submittedToday}/${tls.length}</div><div class="lbl">Submitted Today</div></div>
+    <div class="stat-card"><div class="num">${avgCompliance===null?'—':avgCompliance+'%'}</div><div class="lbl">Overall Avg Compliance</div></div>
+    <button class="stat-card maroon" style="text-align:left;cursor:pointer;border:none;" data-act="hse-open-missing-today"><div class="num">${missingToday}</div><div class="lbl">Missing Today — tap for details</div></button>
+  </div>
+  <div class="chart-card">
+    <h3>Today's Submission Status</h3>
+    <div class="chart-wrap small"><canvas id="chartSubmission"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>Avg Compliance by Area (All-Time)</h3>
+    <div style="font-size:11.5px;color:var(--text-soft);margin-bottom:6px;">Number above each bar = total submissions for that area</div>
+    <div class="chart-wrap small"><canvas id="chartAreaCompliance"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>Compliance Trend</h3>
+    <div class="chip-filter">
+      ${[[7,"Daily (7d)"],[15,"15 Days"],[30,"30 Days"],[90,"90 Days"]].map(([v,l])=>
+        `<button class="tab-btn ${trendDays===v?'active':''}" data-act="ov-trend-range" data-v="${v}">${l}</button>`).join("")}
+    </div>
+    <div class="chart-wrap"><canvas id="chartTrend"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Quick Links</h3>
+    <div class="btn-row" style="margin-bottom:10px;">
+      <button class="btn outline small" data-act="hse-tab" data-tab="performance">View Rankings</button>
+      <button class="btn outline small" data-act="hse-tab" data-tab="missing">Missing Reports</button>
+    </div>
+  </div>
+  `;
+}
+
+const barCountLabelsPlugin = {
+  id: "barCountLabels",
+  afterDatasetsDraw(chart, args, opts){
+    const {ctx} = chart;
+    const counts = (opts && opts.counts) || [];
+    chart.data.datasets.forEach((dataset, di)=>{
+      const meta = chart.getDatasetMeta(di);
+      meta.data.forEach((bar, idx)=>{
+        const count = counts[idx];
+        if(count===undefined || count===null) return;
+        ctx.save();
+        ctx.fillStyle = "#5b6270";
+        ctx.font = "700 11px -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(`n=${count}`, bar.x, bar.y - 8);
+        ctx.restore();
+      });
+    });
+  }
+};
+function drawOverviewCharts(){
+  if(typeof Chart === "undefined" || !chartData.overview) return;
+  const d = chartData.overview;
+  destroyChart("chartSubmission");
+  const subEl = document.getElementById("chartSubmission");
+  if(subEl){
+    chartInstances["chartSubmission"] = new Chart(subEl, {
+      type:"doughnut",
+      data:{ labels:["Submitted","Missing"], datasets:[{ data:[d.submittedToday, d.missingToday], backgroundColor:["#1e8e5a","#c0392b"], borderWidth:0 }] },
+      options:{ plugins:{legend:{position:"bottom", labels:{font:{size:11}}}}, cutout:"65%", maintainAspectRatio:false }
+    });
+  }
+  destroyChart("chartAreaCompliance");
+  const areaEl = document.getElementById("chartAreaCompliance");
+  if(areaEl){
+    chartInstances["chartAreaCompliance"] = new Chart(areaEl, {
+      type:"bar",
+      data:{ labels:d.areaLabels, datasets:[{ data:d.areaValues, backgroundColor:d.areaLabels.map(a=>AREA_COLORS[a]||"#888"), borderRadius:6 }] },
+      options:{
+        plugins:{legend:{display:false}, barCountLabels:{counts:d.areaCounts}, tooltip:{callbacks:{ afterLabel: (ctx)=> `Submissions: ${d.areaCounts[ctx.dataIndex]}` }}},
+        scales:{y:{beginAtZero:true, max:100, ticks:{callback:v=>v+"%"}}},
+        maintainAspectRatio:false,
+        layout:{padding:{top:18}}
+      },
+      plugins:[barCountLabelsPlugin]
+    });
+  }
+  destroyChart("chartTrend");
+  const trendEl = document.getElementById("chartTrend");
+  if(trendEl){
+    chartInstances["chartTrend"] = new Chart(trendEl, {
+      type:"line",
+      data:{ labels:d.trendLabels, datasets:[{ data:d.trendValues, borderColor:"#590515", backgroundColor:"rgba(89,5,21,0.08)", fill:true, tension:0.3, spanGaps:true, pointRadius:2 }] },
+      options:{ plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, max:100, ticks:{callback:v=>v+"%"}}}, maintainAspectRatio:false }
+    });
+  }
+}
+
+/* ---- Team Leaders ---- */
+async function tplHseTeam(){
+  const tls = await loadAllTLs();
+  const filtered = tls.filter(t=>t.name.toLowerCase().includes(state.tlSearch.toLowerCase()) || t.employeeId.toLowerCase().includes(state.tlSearch.toLowerCase()) || t.mobile.includes(state.tlSearch));
+  return `
+  <div class="search-box"><input type="text" class="icon-input" id="hseTlSearch" placeholder="Search name, ID or mobile" value="${escapeHtml(state.tlSearch)}" style="text-align:center;"/></div>
+  <button class="btn outline" data-act="hse-add-tl" style="margin-bottom:14px;">${ICON.plus} Add Team Leader</button>
+  <div class="table-wrap"><table>
+    <tr><th>Name</th><th>Emp ID</th><th>Mobile</th><th>Actions</th></tr>
+    ${filtered.map(t=>`
+      <tr>
+        <td>${escapeHtml(t.name)}</td><td>${escapeHtml(t.employeeId)}</td><td>${escapeHtml(t.mobile)}</td>
+        <td>
+          <button class="action-icon-btn" data-act="hse-edit-tl" data-mobile="${t.mobile}">${ICON.edit}</button>
+          <button class="action-icon-btn" data-act="hse-delete-tl" data-mobile="${t.mobile}">${ICON.trash}</button>
+        </td>
+      </tr>`).join("")}
+  </table></div>
+  ${filtered.length===0?`<div class="empty-state">No team leaders found.</div>`:""}
+  `;
+}
+
+/* ---- Reports ---- */
+function dateRangeForPreset(preset, from, to){
+  const end = new Date(); end.setHours(23,59,59,999);
+  let start;
+  if(preset==="today"){ start = new Date(); start.setHours(0,0,0,0); }
+  else if(preset==="yesterday"){ start = new Date(); start.setDate(start.getDate()-1); start.setHours(0,0,0,0); end.setDate(end.getDate()-1); end.setHours(23,59,59,999); }
+  else if(preset==="15"){ start = new Date(); start.setDate(start.getDate()-15); }
+  else if(preset==="30"){ start = new Date(); start.setDate(start.getDate()-30); }
+  else if(preset==="90"){ start = new Date(); start.setDate(start.getDate()-90); }
+  else if(preset==="custom"){ start = from ? new Date(from+"T00:00:00") : new Date(0); return {start, end: to ? new Date(to+"T23:59:59") : end}; }
+  else { start = new Date(0); }
+  return {start, end};
+}
+async function getReportsInRange(preset, area, from, to){
+  const {start, end} = dateRangeForPreset(preset, from, to);
+  const keys = await storList("rpt:");
+  const all = (await Promise.all(keys.map(k=>storGet(k)))).filter(Boolean);
+  return all.filter(r=>{
+    const d = new Date(r.date+"T12:00:00");
+    const inRange = d >= start && d <= end;
+    const areaMatch = area==="all" || r.area===area;
+    return inRange && areaMatch;
+  });
+}
+async function tplHseReports(){
+  const f = state.reportsFilter;
+  let reports = await getReportsInRange(f.range, f.area, f.customFrom, f.customTo);
+  if(f.status!=="all") reports = reports.filter(r=>r.status===f.status);
+  if(state.reportSearch) reports = reports.filter(r=> r.name.toLowerCase().includes(state.reportSearch.toLowerCase()));
+  reports.sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="chip-filter">
+    ${[["today","Today"],["yesterday","Yesterday"],["15","15 Days"],["30","30 Days"],["90","90 Days"],["all","All Time"]].map(([v,l])=>
+      `<button class="tab-btn ${f.range===v?'active':''}" data-act="rf-range" data-v="${v}">${l}</button>`).join("")}
+  </div>
+  <select id="rfArea" style="margin-bottom:10px;">
+    <option value="all" ${f.area==='all'?'selected':''}>All Areas</option>
+    ${AREAS.map(a=>`<option value="${a}" ${f.area===a?'selected':''}>${a}</option>`).join("")}
+  </select>
+  <select id="rfStatus" style="margin-bottom:10px;">
+    <option value="all" ${f.status==='all'?'selected':''}>All Statuses</option>
+    <option value="submitted" ${f.status==='submitted'?'selected':''}>Submitted</option>
+    <option value="draft" ${f.status==='draft'?'selected':''}>Draft</option>
+  </select>
+  <input type="text" id="reportSearch" placeholder="Search Team Leader name" value="${escapeHtml(state.reportSearch)}" style="margin-bottom:14px;"/>
+  <div class="btn-row" style="margin-bottom:14px;">
+    <button class="btn outline small" data-act="hse-export-csv">${ICON.download} Export CSV</button>
+    <button class="btn outline small" data-act="hse-print">🖨 Print View</button>
+  </div>
+  <div style="font-size:12px;color:var(--text-soft);margin-bottom:8px;">${reports.length} report(s) found</div>
+  <div class="table-wrap"><table>
+    <tr><th>Date</th><th>Team Leader</th><th>Area</th><th>%</th><th>Status</th><th>Actions</th></tr>
+    ${reports.map(r=>`
+      <tr>
+        <td>${fmtDate(r.date)}</td><td>${escapeHtml(r.name)}</td><td>${r.area}</td>
+        <td>${r.compliance===null?'—':r.compliance+'%'}</td>
+        <td><span class="status-chip ${r.status}">${r.status}</span></td>
+        <td>
+          <button class="action-icon-btn" data-act="hse-view-report" data-date="${r.date}" data-mobile="${r.mobile}" data-area="${r.area}">${ICON.list}</button>
+          <button class="action-icon-btn" data-act="hse-delete-report" data-date="${r.date}" data-mobile="${r.mobile}" data-area="${r.area}">${ICON.trash}</button>
+        </td>
+      </tr>`).join("")}
+  </table></div>
+  ${reports.length===0?`<div class="empty-state">No reports match these filters.</div>`:""}
+  `;
+}
+
+/* ---- Performance ---- */
+function computeAreaBreakdown(reportsForLeader){
+  const agg = {};
+  reportsForLeader.forEach(r=>{
+    if(r.compliance===null) return;
+    if(!agg[r.area]) agg[r.area] = {total:0, count:0};
+    agg[r.area].total += r.compliance;
+    agg[r.area].count += 1;
+  });
+  return Object.keys(agg).map(a=>({area:a, avg:Math.round(agg[a].total/agg[a].count), count:agg[a].count})).sort((a,b)=>a.avg-b.avg);
+}
+async function printLowestComplianceReport(){
+  const f = state.perfFilter;
+  const reports = (await getReportsInRange(f.range==="all"?"all":f.range, f.area)).filter(r=>r.status==="submitted" && r.compliance!==null);
+  const byLeader = {};
+  reports.forEach(r=>{
+    if(!byLeader[r.name]) byLeader[r.name] = {name:r.name, mobile:r.mobile, reports:[]};
+    byLeader[r.name].reports.push(r);
+  });
+  const leaders = Object.values(byLeader).map(x=>({
+    ...x,
+    avg: Math.round(x.reports.reduce((a,r)=>a+r.compliance,0)/x.reports.length),
+    count: x.reports.length
+  })).sort((a,b)=>a.avg-b.avg);
+
+  if(leaders.length===0){ alert("No submitted reports in the current filter range to report on."); return; }
+  const bottomN = leaders.slice(0, Math.min(5, leaders.length));
+
+  const rangeLabel = {today:"Today", "15":"Last 15 Days", "30":"Last 30 Days", "90":"Last 90 Days", all:"All Time"}[f.range] || f.range;
+  const areaLabel = f.area==="all" ? "All Areas" : f.area;
+  const generatedAt = new Date().toLocaleString("en-GB",{dateStyle:"long", timeStyle:"short"});
+
+  let rowsHtml = "";
+  bottomN.forEach((l,i)=>{
+    const failures = computeItemFailures(l.reports).slice(0,5);
+    const areaBreakdown = computeAreaBreakdown(l.reports);
+    rowsHtml += `
+    <div class="pr-leader">
+      <div class="pr-leader-head">
+        <div><span class="pr-rank">#${i+1}</span>${escapeHtml(l.name)}</div>
+        <div class="pr-avg">${l.avg}% avg · ${l.count} report(s)</div>
+      </div>
+      ${areaBreakdown.length ? `
+      <table class="pr-table">
+        <tr><th>Work Area</th><th>Avg Compliance</th><th>Reports</th></tr>
+        ${areaBreakdown.map(a=>`<tr><td>${a.area}</td><td>${a.avg}%</td><td>${a.count}</td></tr>`).join("")}
+      </table>` : ""}
+      ${failures.length ? `
+      <table class="pr-table">
+        <tr><th>Checklist Item Not Complying</th><th>Failed</th><th>Fail Rate</th></tr>
+        ${failures.map(x=>`<tr><td>${x.label}</td><td>${x.no}/${x.total}</td><td>${x.failRate}%</td></tr>`).join("")}
+      </table>` : `<div class="pr-none">No repeated checklist failures identified.</div>`}
+    </div>`;
+  });
+
+  const html = `<!DOCTYPE html><html><head><title>JGM Lowest Compliance Report</title>
+<meta charset="utf-8">
+<style>
+  body{font-family:-apple-system,Arial,sans-serif;color:#1a1f2b;padding:32px;max-width:800px;margin:0 auto;}
+  .pr-header{display:flex;align-items:center;gap:16px;border-bottom:3px solid #590515;padding-bottom:16px;margin-bottom:20px;}
+  .pr-header img{height:50px;}
+  .pr-header h1{font-size:19px;color:#163878;margin:0;}
+  .pr-header p{margin:2px 0 0;font-size:12px;color:#5b6270;}
+  .pr-meta{font-size:12px;color:#5b6270;margin-bottom:24px;display:flex;gap:24px;flex-wrap:wrap;}
+  .pr-meta b{color:#1a1f2b;}
+  .pr-leader{border:1px solid #e0e2e7;border-radius:10px;padding:16px;margin-bottom:18px;page-break-inside:avoid;}
+  .pr-leader-head{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:15px;margin-bottom:10px;border-bottom:2px solid #590515;padding-bottom:8px;}
+  .pr-rank{background:#590515;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:8px;}
+  .pr-avg{color:#c0392b;font-weight:800;}
+  .pr-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:10px;}
+  .pr-table th{text-align:left;background:#f2f3f5;padding:6px 8px;font-size:11px;text-transform:uppercase;color:#5b6270;}
+  .pr-table td{padding:6px 8px;border-bottom:1px solid #eee;}
+  .pr-none{font-size:12.5px;color:#5b6270;font-style:italic;}
+  .pr-footer{margin-top:24px;font-size:11px;color:#9aa1ac;text-align:center;}
+  @media print{ body{padding:12px;} .pr-leader{page-break-inside:avoid;} }
+</style></head>
+<body>
+  <div class="pr-header">
+    <img src="${LOGO_SRC}" alt="JGM"/>
+    <div><h1>Lowest Compliance Report</h1><p>JGM Site Safety Inspection — Prepared for Management Review Meeting (MRM)</p></div>
+  </div>
+  <div class="pr-meta">
+    <div>Range: <b>${rangeLabel}</b></div>
+    <div>Area Filter: <b>${areaLabel}</b></div>
+    <div>Generated: <b>${generatedAt}</b></div>
+    <div>Teams Shown: <b>${bottomN.length} of ${leaders.length}</b> (lowest compliance)</div>
+  </div>
+  ${rowsHtml}
+  <div class="pr-footer">Ref: IMS/JG/HSE/FRM_036/R00 — Generated automatically from live inspection data.</div>
+</body></html>`;
+
+  const win = window.open("", "_blank");
+  if(!win){ alert("Please allow pop-ups for this site to print the report."); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>{ try{ win.focus(); win.print(); }catch(e){} }, 400);
+}
+function computeItemFailures(reportsForLeader){
+  const tally = {};
+  CHECKLIST.forEach(item=>{ tally[item.id] = {no:0, total:0}; });
+  reportsForLeader.forEach(r=>{
+    CHECKLIST.forEach(item=>{
+      const ans = r.answers ? r.answers[item.id] : null;
+      if(ans === "Yes" || ans === "No"){
+        tally[item.id].total += 1;
+        if(ans === "No") tally[item.id].no += 1;
+      }
+    });
+  });
+  return CHECKLIST.map(item=>({
+    id:item.id, label:item.label,
+    no: tally[item.id].no, total: tally[item.id].total,
+    failRate: tally[item.id].total ? Math.round((tally[item.id].no/tally[item.id].total)*100) : 0
+  })).filter(x=>x.no>0).sort((a,b)=> b.no-a.no || b.failRate-a.failRate);
+}
+async function tplHsePerformance(){
+  const f = state.perfFilter;
+  const reports = (await getReportsInRange(f.range==="all"?"all":f.range, f.area)).filter(r=>r.status==="submitted" && r.compliance!==null);
+  const byLeader = {};
+  reports.forEach(r=>{
+    if(!byLeader[r.name]) byLeader[r.name] = {name:r.name, mobile:r.mobile, total:0, count:0};
+    byLeader[r.name].total += r.compliance;
+    byLeader[r.name].count += 1;
+  });
+  const ranking = Object.values(byLeader).map(x=>({name:x.name, mobile:x.mobile, avg:Math.round(x.total/x.count), count:x.count})).sort((a,b)=>b.avg-a.avg);
+  const best = ranking[0];
+  const worst = ranking[ranking.length-1];
+  const worstFailures = worst ? computeItemFailures(reports.filter(r=>r.name===worst.name)) : [];
+  const topFails = worstFailures.slice(0,2);
+  chartData.performance = ranking.slice(0,10);
+  return `
+  <div class="chip-filter">
+    ${[["today","Today"],["15","15 Days"],["30","30 Days"],["90","90 Days"],["all","All Time"]].map(([v,l])=>
+      `<button class="tab-btn ${f.range===v?'active':''}" data-act="pf-range" data-v="${v}">${l}</button>`).join("")}
+  </div>
+  <select id="pfArea" style="margin-bottom:16px;">
+    <option value="all" ${f.area==='all'?'selected':''}>All Areas</option>
+    ${AREAS.map(a=>`<option value="${a}" ${f.area===a?'selected':''}>${a}</option>`).join("")}
+  </select>
+  ${ranking.length===0 ? `<div class="empty-state">No submitted reports in this range.</div>` : `
+  <div class="stat-grid">
+    <button class="stat-card ${state.perfSortOrder==='best'?'sort-active':''}" data-act="pf-sort" data-order="best" style="text-align:left;cursor:pointer;border:none;">
+      <div class="num" style="font-size:16px;">${escapeHtml(best.name)}</div><div class="lbl">🏆 Best (${best.avg}%) — tap to sort best→worst</div>
+    </button>
+    <button class="stat-card maroon ${state.perfSortOrder==='worst'?'sort-active':''}" data-act="pf-sort" data-order="worst" style="text-align:left;cursor:pointer;border:none;">
+      <div class="num" style="font-size:16px;">${escapeHtml(worst.name)}</div><div class="lbl">⚠ Lowest (${worst.avg}%) — tap to sort worst→best</div>
+    </button>
+  </div>
+  ${topFails.length>0 ? `
+  <div class="card" style="border-color:var(--danger);">
+    <h3 style="color:var(--danger);">Repeated Failures — ${escapeHtml(worst.name)}</h3>
+    ${topFails.map(f=>`
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--grey-border);font-size:13px;">
+        <span>${f.label}</span><b style="color:var(--danger);">Failed ${f.no}/${f.total} (${f.failRate}%)</b>
+      </div>`).join("")}
+  </div>` : ""}
+  <button class="btn" style="margin-bottom:16px;background:#2E86C1;color:#fff;" data-act="hse-print-lowest">🖨 Lowest Compliance Report</button>
+  <div class="chart-card">
+    <h3>Top ${Math.min(10,ranking.length)} Team Leaders by Compliance${f.area!=='all' ? ' — '+f.area : ''}</h3>
+    <div class="chart-wrap" style="height:${Math.max(180, ranking.slice(0,10).length*36)}px;"><canvas id="chartRanking"></canvas></div>
+  </div>
+  <h3 style="color:var(--navy);font-size:14px;margin-bottom:10px;">Full Ranking — ${state.perfSortOrder==='best' ? 'Best to Worst' : 'Worst to Best'}</h3>
+  ${(state.perfSortOrder==='best' ? ranking : [...ranking].reverse()).map((r,i)=>{
+    const medalCls = state.perfSortOrder==='best'
+      ? (i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-other')
+      : (i===0?'rank-worst-1':i===1?'rank-worst-2':i===2?'rank-worst-3':'rank-other');
+    return `
+    <div class="rank-row">
+      <div class="rank-medal ${medalCls}">${i+1}</div>
+      <div class="rank-info"><div class="name">${escapeHtml(r.name)}</div><div class="meta">${r.count} report(s)</div></div>
+      <div class="rank-score">${r.avg}%</div>
+      <button class="action-icon-btn" data-act="hse-tl-chart" data-mobile="${r.mobile}" data-name="${escapeHtml(r.name)}" title="View full compliance breakdown">${ICON.chart}</button>
+    </div>`;
+  }).join("")}
+  `}
+  `;
+}
+
+function drawPerformanceChart(){
+  if(typeof Chart === "undefined" || !chartData.performance) return;
+  destroyChart("chartRanking");
+  const el = document.getElementById("chartRanking");
+  if(!el) return;
+  const rk = chartData.performance;
+  chartInstances["chartRanking"] = new Chart(el, {
+    type:"bar",
+    data:{ labels:rk.map(r=>r.name), datasets:[{ data:rk.map(r=>r.avg), backgroundColor:"#590515", borderRadius:5 }] },
+    options:{
+      indexAxis:"y",
+      plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true, max:100, ticks:{callback:v=>v+"%"}}},
+      maintainAspectRatio:false
+    }
+  });
+}
+
+/* ---- Missing Reports ---- */
+async function tplHseMissing(){
+  const tls = await loadAllTLs();
+  const date = state.missingDate;
+  const keys = await storList("rpt:"+date+":");
+  const reports = (await Promise.all(keys.map(k=>storGet(k)))).filter(r=>r && r.status==="submitted");
+  const submittedMobiles = new Set(reports.map(r=>sanitizeMobile(r.mobile)));
+  const missing = tls.filter(t=>!submittedMobiles.has(sanitizeMobile(t.mobile)));
+  return `
+  <label class="field-label">Date</label>
+  <input type="date" id="missingDate" value="${date}"/>
+  <div style="margin:14px 0;">
+    <span class="status-chip missing">${missing.length} MISSING</span>
+    <span class="status-chip submitted" style="margin-left:6px;">${reports.length} SUBMITTED</span>
+  </div>
+  ${missing.length===0 ? `<div class="empty-state"><div class="big-icon">${ICON.check}</div>All Team Leaders submitted for ${fmtDate(date)}.</div>` :
+    missing.map(t=>`
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:12px 16px;">
+        <div><div style="font-weight:700;">${escapeHtml(t.name)}</div><div style="font-size:12px;color:var(--text-soft);">${escapeHtml(t.mobile)}</div></div>
+        <span class="status-chip missing">NOT SUBMITTED</span>
+      </div>`).join("")}
+  `;
+}
+
+/* ---- Data Management ---- */
+async function tplHseData(){
+  await loadHsePinStatuses();
+  return `
+  <div class="card">
+    <h3>HSE Member PINs</h3>
+    <p style="font-size:13px;color:var(--text-soft);">Each HSE member sets their own private 4-digit PIN the first time they log in. If someone forgets theirs, reset it here so they can set a new one.</p>
+    ${HSE_NAMES.map(n=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--grey-border);">
+        <div style="font-weight:700;font-size:14px;">${n}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="status-chip ${hsePinStatuses[n] ? 'submitted' : 'draft'}">${hsePinStatuses[n] ? 'PIN SET' : 'NOT SET'}</span>
+          ${hsePinStatuses[n] ? `<button class="btn small outline maroon-o" data-act="hse-reset-pin" data-name="${n}">Reset</button>` : ''}
+        </div>
+      </div>`).join("")}
+  </div>
+  <div class="card">
+    <h3>${ICON.warn} Danger Zone</h3>
+    <p style="font-size:13px;color:var(--text-soft);">These actions permanently delete data for everyone using this app. Use with caution.</p>
+    <button class="btn outline maroon-o" style="margin-bottom:10px;" data-act="hse-clear-reports">Clear All Inspection Reports</button>
+    <button class="btn outline maroon-o" style="margin-bottom:10px;" data-act="hse-clear-tls">Clear All Team Leader Registrations</button>
+    <button class="btn danger" data-act="hse-reset-all">Reset Entire Application</button>
+  </div>
+  <div class="banner info">${ICON.warn} Note: This app stores data in your connected Supabase database, shared live across every device using this link. Since it's a single static file with no server of its own, treat the link itself as sensitive — anyone with it can read and write this data.</div>
+  `;
+}
+
+/* ===================== HELPERS ===================== */
+function escapeHtml(s){
+  if(s===undefined||s===null) return "";
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function showModal(html){
+  state.modal = html;
+  renderModal();
+}
+function closeModal(){
+  state.modal = null;
+  const el = document.getElementById("modalRoot");
+  if(el) el.remove();
+}
+function renderModal(){
+  let el = document.getElementById("modalRoot");
+  if(!el){ el = document.createElement("div"); el.id = "modalRoot"; document.body.appendChild(el); }
+  el.innerHTML = `<div class="modal-overlay" data-act="close-modal"><div class="modal-sheet" onclick="event.stopPropagation()">${state.modal}</div></div>`;
+  bindDynamicEvents();
+}
+
+/* ===================== EVENT BINDING ===================== */
+function bindScreenEvents(){
+  bindDynamicEvents();
+  // async data screens (each of these calls bindDynamicEvents() again once its real content exists)
+  if(state.screen === "tl_home") renderTLHomeAsync();
+  if(state.screen === "tl_reports") renderMyReportsAsync();
+  if(state.screen === "hse_dash") renderHseTabAsync();
+}
+function bindDynamicEvents(){
+  document.querySelectorAll("[data-act]").forEach(el=>{
+    el.removeEventListener("click", handleAction);
+    el.addEventListener("click", handleAction);
+  });
+  const bindEl = (id, evt, fn) => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener(evt, fn);
+  };
+  bindEl("tlsearch", "input", e=>{ state.tlSearch = e.target.value; render(); });
+  bindEl("hseTlSearch", "input", e=>{ state.tlSearch = e.target.value; renderHseTabAsync(); });
+  bindEl("reportSearch", "input", e=>{ state.reportSearch = e.target.value; renderHseTabAsync(); });
+  bindEl("tlComments", "blur", e=>{ state.comments = e.target.value; saveDraft(); });
+  bindEl("manpowerInput", "input", e=>{ state.manpower = e.target.value; saveDraft(); });
+  bindEl("manpowerInput", "blur", ()=>{ render(); });
+  bindEl("rfArea", "change", e=>{ state.reportsFilter.area = e.target.value; renderHseTabAsync(); });
+  bindEl("rfStatus", "change", e=>{ state.reportsFilter.status = e.target.value; renderHseTabAsync(); });
+  bindEl("pfArea", "change", e=>{ state.perfFilter.area = e.target.value; renderHseTabAsync(); });
+  bindEl("missingDate", "change", e=>{ state.missingDate = e.target.value; renderHseTabAsync(); });
+  bindEl("hseName", "change", e=>{ state.hsePinSelected = e.target.value; render(); });
+}
+
+async function handleAction(e){
+  const el = e.currentTarget;
+  const act = el.getAttribute("data-act");
+
+  if(act==="go-tl"){ await loadAllTLs(); setState({screen:"tl_identify"}); }
+  else if(act==="go-hse"){ await loadHsePinStatuses(); setState({screen:"hse_pin", hsePinSelected:""}); }
+  else if(act==="back"){ handleBack(); }
+  else if(act==="go-register"){ setState({screen:"tl_register"}); }
+  else if(act==="tl-select-continue"){
+    const sel = document.getElementById("tlSelect");
+    const mobile = sel ? sel.value : "";
+    if(!mobile){ alert("Please select your name from the dropdown, or register as a new Team Leader."); return; }
+    const tl = cachedTLs.find(t=>t.mobile===mobile);
+    setState({currentTL: tl, screen:"tl_home"});
+  }
+  else if(act==="submit-register"){ await doRegister(); }
+  else if(act==="switch-profile"){ await loadAllTLs(); setState({currentTL:null, screen:"tl_identify"}); }
+  else if(act==="start-inspection"){ await startInspection(); }
+  else if(act==="view-my-reports"){ setState({screen:"tl_reports"}); }
+  else if(act==="pick-area"){
+    state.selectedArea = el.getAttribute("data-area");
+    await ensureDraftForArea();
+    setState({screen:"tl_form"});
+  }
+  else if(act==="answer"){
+    const id = el.getAttribute("data-id");
+    const val = el.getAttribute("data-val");
+    state.answers[id] = val;
+    render();
+    saveDraft();
+  }
+  else if(act==="go-review"){ setState({screen:"tl_review"}); }
+  else if(act==="back-to-form"){ setState({screen:"tl_form"}); }
+  else if(act==="submit-inspection"){ await doSubmit(); }
+  else if(act==="go-tl-home"){ setState({screen:"tl_home"}); }
+  else if(act==="hse-login"){ await doHseLogin(); }
+  else if(act==="hse-setup-pin"){ await doHseSetupPin(); }
+  else if(act==="hse-logout"){ setState({hseUser:null, screen: state.currentTL ? "tl_home" : "role"}); }
+  else if(act==="hse-tab"){ state.hseTab = el.getAttribute("data-tab"); render(); }
+  else if(act==="rf-range"){ state.reportsFilter.range = el.getAttribute("data-v"); renderHseTabAsync(); }
+  else if(act==="pf-range"){ state.perfFilter.range = el.getAttribute("data-v"); renderHseTabAsync(); }
+  else if(act==="pf-sort"){ state.perfSortOrder = el.getAttribute("data-order"); renderHseTabAsync(); }
+  else if(act==="ov-trend-range"){ state.overviewTrendDays = Number(el.getAttribute("data-v")); renderHseTabAsync(); }
+  else if(act==="hse-print-lowest"){ await printLowestComplianceReport(); }
+  else if(act==="hse-add-tl"){ openAddTLModal(); }
+  else if(act==="hse-edit-tl"){ openEditTLModal(el.getAttribute("data-mobile")); }
+  else if(act==="hse-delete-tl"){ await deleteTL(el.getAttribute("data-mobile")); }
+  else if(act==="hse-view-report"){ openViewReportModal(el.getAttribute("data-date"), el.getAttribute("data-mobile"), el.getAttribute("data-area")); }
+  else if(act==="hse-tl-chart"){ await openTLBreakdownModal(el.getAttribute("data-mobile"), el.getAttribute("data-name")); }
+  else if(act==="hse-open-missing-today"){ await openMissingTodayModal(); }
+  else if(act==="missing-drilldown"){ await openMissingDrilldown(el.getAttribute("data-mobile"), el.getAttribute("data-name")); }
+  else if(act==="hse-delete-report"){ await deleteReport(el.getAttribute("data-date"), el.getAttribute("data-mobile"), el.getAttribute("data-area")); }
+  else if(act==="hse-export-csv"){ await exportCSV(); }
+  else if(act==="hse-print"){ window.print(); }
+  else if(act==="hse-reset-pin"){ await resetHsePin(el.getAttribute("data-name")); }
+  else if(act==="hse-clear-reports"){ await clearAllReports(); }
+  else if(act==="hse-clear-tls"){ await clearAllTLs(); }
+  else if(act==="hse-reset-all"){ await resetAll(); }
+  else if(act==="close-modal"){ closeModal(); }
+  else if(act==="open-drawer"){ setState({drawerOpen:true}); }
+  else if(act==="close-drawer"){ setState({drawerOpen:false}); }
+  else if(act==="drawer-home"){ setState({drawerOpen:false, screen:"tl_home"}); }
+  else if(act==="drawer-new-inspection"){ setState({drawerOpen:false}); await startInspection(); }
+  else if(act==="drawer-my-reports"){ setState({drawerOpen:false, screen:"tl_reports"}); }
+  else if(act==="drawer-hse"){ await loadHsePinStatuses(); setState({drawerOpen:false, screen:"hse_pin", hsePinSelected:""}); }
+  else if(act==="drawer-switch-profile"){ await loadAllTLs(); setState({drawerOpen:false, currentTL:null, screen:"tl_identify"}); }
+  else if(act==="refresh"){ await refreshCurrentScreen(); }
+  else if(act==="save-exit"){ await saveDraft(); setState({screen:"tl_home"}); }
+  else if(act==="modal-save-tl"){ await saveModalTL(el); }
+  else if(act==="modal-close"){ closeModal(); }
+}
+
+async function refreshCurrentScreen(){
+  if(state.screen === "tl_home"){ await renderTLHomeAsync(); }
+  else if(state.screen === "tl_reports"){ await renderMyReportsAsync(); }
+  else if(state.screen === "tl_identify"){ await loadAllTLs(); render(); }
+  else if(state.screen === "hse_dash"){ await loadAllTLs(); await renderHseTabAsync(); }
+  else { render(); }
+}
+
+function handleBack(){
+  const map = {
+    tl_identify:"role", tl_register:"tl_identify", tl_home:"tl_identify",
+    tl_area:"tl_home", tl_form:"tl_area", tl_review:"tl_form",
+    tl_reports:"tl_home", hse_pin:"role"
+  };
+  const next = map[state.screen] || "role";
+  setState({screen: next});
+}
+
+/* ===================== TL ACTIONS ===================== */
+function validateUniqueTL(name, empId, mobile, excludeMobile){
+  if(!/^\d{5}$/.test(empId)) return "Employee ID must be exactly 5 digits (numbers only).";
+  if(!/^\d{10}$/.test(mobile)) return "Mobile number must be exactly 10 digits (numbers only).";
+  const nameLower = name.trim().toLowerCase();
+  for(const t of cachedTLs){
+    if(excludeMobile && t.mobile === excludeMobile) continue;
+    if(t.name.trim().toLowerCase() === nameLower) return `The name "${t.name}" is already registered to another Team Leader. Names must be unique.`;
+    if(t.employeeId === empId) return `Employee ID ${empId} is already registered to ${t.name}. Employee IDs must be unique.`;
+    if(t.mobile === mobile) return `Mobile number ${mobile} is already registered to ${t.name}. Mobile numbers must be unique.`;
+  }
+  return null;
+}
+async function doRegister(){
+  const name = document.getElementById("regName").value.trim();
+  const empId = document.getElementById("regEmpId").value.trim();
+  const mobile = sanitizeMobile(document.getElementById("regMobile").value.trim());
+  if(!name || !empId || !mobile){ alert("Please fill all fields."); return; }
+  await loadAllTLs();
+  const err = validateUniqueTL(name, empId, mobile, null);
+  if(err){ alert(err); return; }
+  const tl = {name, employeeId:empId, mobile, registeredAt: nowIso()};
+  await storSet(tlKey(mobile), tl);
+  await loadAllTLs();
+  setState({currentTL: tl, screen:"tl_home"});
+}
+
+function yesterdayStr(){ const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+function isExpired(r){ return !!(r && r.expiresAt && Date.now() > Date.parse(r.expiresAt)); }
+async function startInspection(){
+  state.selectedArea = null;
+  state.answers = {};
+  state.manpower = "";
+  state.comments = "";
+  state.activeReportDate = null;
+  state.reportLocked = false;
+  state.lockedPreview = null;
+  setState({screen:"tl_area"});
+}
+async function ensureDraftForArea(){
+  const mobile = state.currentTL.mobile;
+  const area = state.selectedArea;
+  const todayRep = await storGet(rptKey(todayStr(), mobile, area));
+  const yestRep = await storGet(rptKey(yesterdayStr(), mobile, area));
+  let active = null;
+  if(todayRep && !isExpired(todayRep)) active = todayRep;
+  else if(yestRep && !isExpired(yestRep)) active = yestRep;
+
+  if(active){
+    state.activeReportDate = active.date;
+    state.answers = active.answers || {};
+    state.manpower = (active.manpower !== undefined && active.manpower !== null) ? String(active.manpower) : "";
+    state.comments = active.comments || "";
+    state.reportLocked = false;
+    state.lockedPreview = null;
+    state.reportExpiresAt = active.expiresAt || null;
+  } else {
+    const expiredOne = (todayRep && isExpired(todayRep)) ? todayRep : ((yestRep && isExpired(yestRep)) ? yestRep : null);
+    if(expiredOne){
+      state.reportLocked = true;
+      state.lockedPreview = expiredOne;
+      state.activeReportDate = null;
+      state.answers = {}; state.manpower = ""; state.comments = "";
+    } else {
+      state.activeReportDate = todayStr();
+      state.answers = {}; state.manpower = ""; state.comments = "";
+      state.reportLocked = false;
+      state.lockedPreview = null;
+      state.reportExpiresAt = null;
+    }
+  }
+}
+async function saveDraft(){
+  if(!state.currentTL || !state.selectedArea || state.reportLocked || !state.activeReportDate) return;
+  const key = rptKey(state.activeReportDate, state.currentTL.mobile, state.selectedArea);
+  const existing = await storGet(key);
+  if(isExpired(existing)){
+    state.reportLocked = true; state.lockedPreview = existing; setState({screen:"tl_form"}); return;
+  }
+  const createdAt = existing ? existing.createdAt : nowIso();
+  const expiresAt = existing ? existing.expiresAt : new Date(Date.now() + EDIT_WINDOW_MS).toISOString();
+  state.reportExpiresAt = expiresAt;
+  const report = {
+    mobile: state.currentTL.mobile,
+    name: state.currentTL.name,
+    area: state.selectedArea,
+    date: state.activeReportDate,
+    answers: state.answers,
+    manpower: state.manpower === "" ? null : Number(state.manpower),
+    comments: state.comments,
+    compliance: calcCompliance(state.answers),
+    status: (existing && existing.status === "submitted") ? "submitted" : "draft",
+    createdAt, expiresAt,
+    updatedAt: nowIso(),
+    submittedAt: existing ? existing.submittedAt : null
+  };
+  await storSet(key, report);
+}
+async function doSubmit(){
+  if(state.reportLocked || !state.activeReportDate) return;
+  const key = rptKey(state.activeReportDate, state.currentTL.mobile, state.selectedArea);
+  const existing = await storGet(key);
+  if(isExpired(existing)){
+    state.reportLocked = true; state.lockedPreview = existing; setState({screen:"tl_form"}); return;
+  }
+  const createdAt = existing ? existing.createdAt : nowIso();
+  const expiresAt = existing ? existing.expiresAt : new Date(Date.now() + EDIT_WINDOW_MS).toISOString();
+  const report = {
+    mobile: state.currentTL.mobile,
+    name: state.currentTL.name,
+    area: state.selectedArea,
+    date: state.activeReportDate,
+    answers: state.answers,
+    manpower: state.manpower === "" ? null : Number(state.manpower),
+    comments: state.comments,
+    compliance: calcCompliance(state.answers),
+    status: "submitted",
+    createdAt, expiresAt,
+    updatedAt: nowIso(),
+    submittedAt: nowIso()
+  };
+  await storSet(key, report);
+  setState({screen:"tl_success"});
+}
+
+/* ===================== HSE ACTIONS ===================== */
+async function doHseLogin(){
+  const name = document.getElementById("hseName").value;
+  const pin = document.getElementById("hsePinInput").value;
+  const stored = await storGet(hsePinKey(name));
+  if(!stored || pin !== stored.pin){
+    document.getElementById("hsePinError").textContent = "Incorrect PIN. Please try again.";
+    return;
+  }
+  setState({hseUser:name, screen:"hse_dash", hseTab:"overview"});
+}
+async function doHseSetupPin(){
+  const name = document.getElementById("hseName").value;
+  const pin = document.getElementById("hsePinNew").value;
+  const confirm = document.getElementById("hsePinConfirm").value;
+  const errEl = document.getElementById("hsePinError");
+  if(!/^\d{4}$/.test(pin)){ errEl.textContent = "PIN must be exactly 4 digits."; return; }
+  if(pin !== confirm){ errEl.textContent = "PINs do not match. Please re-enter."; return; }
+  const others = await Promise.all(HSE_NAMES.filter(n=>n!==name).map(n=>storGet(hsePinKey(n))));
+  if(others.some(o=>o && o.pin === pin)){ errEl.textContent = "That PIN is already used by another HSE member. Please choose a different one."; return; }
+  await storSet(hsePinKey(name), {pin, setAt: nowIso()});
+  setState({hseUser:name, screen:"hse_dash", hseTab:"overview"});
+}
+
+function openAddTLModal(){
+  showModal(`
+    <h3>Add Team Leader</h3>
+    <label class="field-label">Name</label><input type="text" id="mName"/>
+    <label class="field-label">Employee ID (exactly 5 digits)</label><input type="text" id="mEmpId" inputmode="numeric" maxlength="5"/>
+    <label class="field-label">Mobile (exactly 10 digits)</label><input type="tel" id="mMobile" inputmode="numeric" maxlength="10"/>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn outline" data-act="modal-close">Cancel</button>
+      <button class="btn primary" data-act="modal-save-tl" data-mode="add">Save</button>
+    </div>
+  `);
+}
+function openEditTLModal(mobile){
+  const t = cachedTLs.find(x=>x.mobile===mobile);
+  if(!t) return;
+  showModal(`
+    <h3>Edit Team Leader</h3>
+    <label class="field-label">Name</label><input type="text" id="mName" value="${escapeHtml(t.name)}"/>
+    <label class="field-label">Employee ID (exactly 5 digits)</label><input type="text" id="mEmpId" value="${escapeHtml(t.employeeId)}" inputmode="numeric" maxlength="5"/>
+    <label class="field-label">Mobile</label><input type="tel" id="mMobile" value="${escapeHtml(t.mobile)}" readonly style="background:var(--grey-bg);"/>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn outline" data-act="modal-close">Cancel</button>
+      <button class="btn primary" data-act="modal-save-tl" data-mode="edit" data-orig="${t.mobile}">Save</button>
+    </div>
+  `);
+}
+async function saveModalTL(el){
+  const origMobile = el ? el.getAttribute("data-orig") : null;
+  const name = document.getElementById("mName").value.trim();
+  const empId = document.getElementById("mEmpId").value.trim();
+  const mobile = sanitizeMobile(document.getElementById("mMobile").value.trim());
+  if(!name || !empId || !mobile){ alert("Please fill all fields."); return; }
+  await loadAllTLs();
+  const err = validateUniqueTL(name, empId, mobile, origMobile);
+  if(err){ alert(err); return; }
+  await storSet(tlKey(mobile), {name, employeeId:empId, mobile, registeredAt: nowIso()});
+  closeModal();
+  await loadAllTLs();
+  renderHseTabAsync();
+}
+async function deleteTL(mobile){
+  if(!confirm("Delete this Team Leader's registration? This cannot be undone.")) return;
+  await storDelete(tlKey(mobile));
+  await loadAllTLs();
+  renderHseTabAsync();
+}
+const MISSING_LOOKBACK_DAYS = 30;
+async function computeMissingSummary(){
+  const tls = await loadAllTLs();
+  const allKeys = await storList("rpt:");
+  const allReports = (await Promise.all(allKeys.map(k=>storGet(k)))).filter(r=>r && r.status==="submitted");
+  const submittedDatesByMobile = {};
+  allReports.forEach(r=>{
+    const m = sanitizeMobile(r.mobile);
+    if(!submittedDatesByMobile[m]) submittedDatesByMobile[m] = new Set();
+    submittedDatesByMobile[m].add(r.date);
+  });
+  const today = todayStr();
+  return tls.map(t=>{
+    const mobile = sanitizeMobile(t.mobile);
+    const regDate = t.registeredAt ? t.registeredAt.slice(0,10) : today;
+    const submittedSet = submittedDatesByMobile[mobile] || new Set();
+    const missedDates = [];
+    for(let i=0;i<MISSING_LOOKBACK_DAYS;i++){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const dstr = d.toISOString().slice(0,10);
+      if(dstr < regDate) break;
+      if(!submittedSet.has(dstr)) missedDates.push(dstr);
+    }
+    return {
+      name:t.name, mobile:t.mobile,
+      missedToday: !submittedSet.has(today),
+      missedDates: missedDates.sort((a,b)=>b.localeCompare(a))
+    };
+  });
+}
+async function openMissingTodayModal(){
+  const results = await computeMissingSummary();
+  const missing = results.filter(r=>r.missedToday).sort((a,b)=>b.missedDates.length-a.missedDates.length);
+  if(missing.length===0){
+    showModal(`<h3>Missing Today</h3><div class="empty-state">${ICON.check} Everyone has submitted at least one report today.</div><button class="btn outline" style="margin-top:12px;" data-act="modal-close">Close</button>`);
+    return;
+  }
+  showModal(`
+    <h3>Missing Today (${missing.length})</h3>
+    <div style="font-size:12.5px;color:var(--text-soft);margin-bottom:12px;">Number shown is total missed days in the last ${MISSING_LOOKBACK_DAYS} days. Tap a name to see the exact dates.</div>
+    ${missing.map(m=>`
+      <div class="tl-pick" data-act="missing-drilldown" data-mobile="${m.mobile}" data-name="${escapeHtml(m.name)}">
+        <div><div class="n">${escapeHtml(m.name)}</div><div class="m">${escapeHtml(m.mobile)}</div></div>
+        <div style="text-align:right;">
+          <div style="font-weight:800;color:var(--danger);font-size:16px;">${m.missedDates.length}</div>
+          <div style="font-size:10px;color:var(--text-soft);">missed (${MISSING_LOOKBACK_DAYS}d)</div>
+        </div>
+      </div>`).join("")}
+    <button class="btn outline" style="margin-top:12px;" data-act="modal-close">Close</button>
+  `);
+}
+async function openMissingDrilldown(mobile, name){
+  const results = await computeMissingSummary();
+  const entry = results.find(r=>sanitizeMobile(r.mobile)===sanitizeMobile(mobile));
+  const dates = entry ? entry.missedDates : [];
+  showModal(`
+    <h3>${escapeHtml(name)} — Missed Dates</h3>
+    <div style="font-size:12.5px;color:var(--text-soft);margin-bottom:12px;">${dates.length} missed day(s) in the last ${MISSING_LOOKBACK_DAYS} days</div>
+    ${dates.length===0 ? `<div class="empty-state">No missed days.</div>` :
+      dates.map(d=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--grey-border);font-size:13.5px;"><span>${fmtDate(d)}</span><span class="status-chip missing">MISSED</span></div>`).join("")}
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn outline" data-act="hse-open-missing-today">${ICON.back} Back to List</button>
+      <button class="btn outline" data-act="modal-close">Close</button>
+    </div>
+  `);
+}
+async function openTLBreakdownModal(mobile, name){
+  const mobileClean = sanitizeMobile(mobile);
+  const keys = await storList("rpt:");
+  const mine = keys.filter(k=>parseRptKey(k).mobile === mobileClean);
+  const reports = (await Promise.all(mine.map(k=>storGet(k)))).filter(r=>r && r.status==="submitted");
+  if(reports.length===0){
+    showModal(`<h3>${escapeHtml(name)}</h3><div class="empty-state">No submitted reports yet.</div><button class="btn outline" style="margin-top:12px;" data-act="modal-close">Close</button>`);
+    return;
+  }
+  const areasPresent = [...new Set(reports.map(r=>r.area))];
+  const areaColors = AREA_COLORS;
+  const perItemPerArea = {};
+  CHECKLIST.forEach(item=>{
+    perItemPerArea[item.id] = {};
+    areasPresent.forEach(a=>{ perItemPerArea[item.id][a] = {yes:0, total:0}; });
+  });
+  reports.forEach(r=>{
+    CHECKLIST.forEach(item=>{
+      const ans = r.answers ? r.answers[item.id] : null;
+      if(ans === "Yes" || ans === "No"){
+        perItemPerArea[item.id][r.area].total += 1;
+        if(ans === "Yes") perItemPerArea[item.id][r.area].yes += 1;
+      }
+    });
+  });
+  showModal(`
+    <h3>${escapeHtml(name)} — Compliance Breakdown</h3>
+    <div style="font-size:12.5px;color:var(--text-soft);margin-bottom:12px;">Across all ${reports.length} submitted report(s) · Areas: ${areasPresent.join(", ")}</div>
+    <div class="chart-wrap" style="height:${Math.max(260, CHECKLIST.length*46)}px;"><canvas id="chartTLBreakdown"></canvas></div>
+    <button class="btn outline" style="margin-top:16px;" data-act="modal-close">Close</button>
+  `);
+  setTimeout(()=>{
+    const ctx = document.getElementById("chartTLBreakdown");
+    if(!ctx || typeof Chart === "undefined") return;
+    destroyChart("chartTLBreakdown");
+    const labels = CHECKLIST.map(item=>item.label.length>30 ? item.label.slice(0,28)+"…" : item.label);
+    const datasets = areasPresent.map(a=>({
+      label:a,
+      data: CHECKLIST.map(item=>{
+        const cell = perItemPerArea[item.id][a];
+        return cell.total ? Math.round((cell.yes/cell.total)*100) : null;
+      }),
+      backgroundColor: areaColors[a] || "#888",
+      borderRadius:4
+    }));
+    chartInstances["chartTLBreakdown"] = new Chart(ctx, {
+      type:"bar",
+      data:{labels, datasets},
+      options:{
+        indexAxis:"y",
+        responsive:true, maintainAspectRatio:false,
+        scales:{ x:{ min:0, max:100, ticks:{callback:v=>v+"%"} } },
+        plugins:{
+          legend:{ display: areasPresent.length>1, position:"bottom" },
+          tooltip:{ callbacks:{ label: (c)=> c.dataset.label + ": " + (c.raw===null ? "No data" : c.raw+"% compliant") } }
+        }
+      }
+    });
+  }, 60);
+}
+function openViewReportModal(date, mobile, area){
+  storGet(rptKey(date, mobile, area)).then(r=>{
+    if(!r) return;
+    showModal(`
+      <h3>${fmtDate(r.date)} — ${r.area}</h3>
+      <div style="font-size:13px;color:var(--text-soft);margin-bottom:10px;">${escapeHtml(r.name)} · Compliance: <b>${r.compliance===null?'—':r.compliance+'%'}</b> · <span class="status-chip ${r.status}">${r.status}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--grey-border);font-size:13px;">
+        <span>Man Power</span><b>${r.manpower===null||r.manpower===undefined?'—':r.manpower}</b>
+      </div>
+      ${CHECKLIST.map(item=>`
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--grey-border);font-size:13px;">
+          <span>${item.label}</span><b>${r.answers[item.id]||'—'}</b>
+        </div>`).join("")}
+      ${r.comments?`<div style="margin-top:10px;font-size:13px;"><b>Comments:</b> ${escapeHtml(r.comments)}</div>`:""}
+      <button class="btn outline" style="margin-top:16px;" data-act="modal-close">Close</button>
+    `);
+  });
+}
+async function deleteReport(date, mobile, area){
+  if(!confirm("Delete this inspection report? This cannot be undone.")) return;
+  await storDelete(rptKey(date, mobile, area));
+  renderHseTabAsync();
+}
+async function exportCSV(){
+  const f = state.reportsFilter;
+  let reports = await getReportsInRange(f.range, f.area, f.customFrom, f.customTo);
+  if(f.status!=="all") reports = reports.filter(r=>r.status===f.status);
+  const headers = ["Date","Team Leader","Area","Man Power","Compliance %","Status", ...CHECKLIST.map(c=>c.label), "Comments"];
+  const rows = reports.map(r=>[
+    r.date, r.name, r.area, (r.manpower===null||r.manpower===undefined)?'':r.manpower, r.compliance===null?'':r.compliance, r.status,
+    ...CHECKLIST.map(c=>r.answers[c.id]||''), (r.comments||'').replace(/[\r\n]+/g," ")
+  ]);
+  const csv = [headers, ...rows].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "JGM_Inspection_Reports_"+todayStr()+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function resetHsePin(name){
+  if(!confirm(`Reset the PIN for ${name}? They will need to set a new one next time they log in.`)) return;
+  await storDelete(hsePinKey(name));
+  await loadHsePinStatuses();
+  renderHseTabAsync();
+}
+async function clearAllReports(){
+  if(!confirm("This will permanently delete ALL inspection reports for ALL team leaders. Continue?")) return;
+  const keys = await storList("rpt:");
+  await Promise.all(keys.map(k=>storDelete(k)));
+  alert("All inspection reports cleared.");
+  renderHseTabAsync();
+}
+async function clearAllTLs(){
+  if(!confirm("This will permanently delete ALL Team Leader registrations. Continue?")) return;
+  const keys = await storList("tl:");
+  await Promise.all(keys.map(k=>storDelete(k)));
+  alert("All Team Leader registrations cleared.");
+  await loadAllTLs();
+  renderHseTabAsync();
+}
+async function resetAll(){
+  if(!confirm("This will permanently reset the ENTIRE application — all team leaders and all reports. This cannot be undone. Continue?")) return;
+  const rk = await storList("rpt:"); const tk = await storList("tl:");
+  await Promise.all([...rk, ...tk].map(k=>storDelete(k)));
+  alert("Application has been fully reset.");
+  await loadAllTLs();
+  setState({screen:"role", currentTL:null, hseUser:null});
+}
+
+/* ===================== INIT ===================== */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(e=>console.log("SW registration failed", e));
+  });
+}
+function tplDbSetupNeeded(){
+  return `
+  <div class="center-screen">
+    <img src="${LOGO_SRC}" class="logo-big"/>
+    <h1 class="brand-title">Database Not Connected</h1>
+    <p class="brand-sub" style="text-align:left;">
+      This app needs a free Supabase database to save and sync inspection data. It hasn't been configured yet.
+      Please share your Supabase Project URL and anon public key with your administrator so they can finish setup —
+      no data can be saved or loaded until this is done.
+    </p>
+  </div>`;
+}
+(async function init(){
+  if(!dbReady){
+    document.getElementById("app").innerHTML = tplDbSetupNeeded();
+    return;
+  }
+  await loadAllTLs();
+  setState({screen:"role"});
+})();
+</script>
+</body>
+</html>
