@@ -16,7 +16,7 @@ export default defineConfig({
         theme_color: '#16294D',
         background_color: '#F4F5F3',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/ptwa/',
         icons: [
           { src: 'logo.png', sizes: '192x192', type: 'image/png' },
           { src: 'logo.png', sizes: '512x512', type: 'image/png' }
