@@ -11,7 +11,11 @@ const STATUS_COLORS = {
 
 function StatCard({ label, value, accent }) {
   return (
-    <div className="card" style={{ padding: '18px 20px' }}>
+    <div className="card card-hover" style={{ padding: '18px 20px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+        background: accent || 'var(--jg-charcoal-300)',
+      }} />
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 30, fontWeight: 700, color: accent || 'var(--jg-charcoal-900)' }}>{value}</div>
       <div className="text-muted" style={{ fontSize: 12.5, marginTop: 4 }}>{label}</div>
     </div>
@@ -41,7 +45,7 @@ export default function Dashboard() {
   const maxStatusCount = Math.max(1, ...Object.values(stats.statusCounts));
 
   return (
-    <div className="container" style={{ paddingTop: 24, paddingBottom: 50 }}>
+    <div className="container page-enter" style={{ paddingTop: 24, paddingBottom: 50 }}>
       <div style={{ marginBottom: 20 }}>
         <div className="eyebrow">OVERVIEW</div>
         <h1 style={{ fontSize: 26, marginTop: 4 }}>Dashboard</h1>
@@ -70,7 +74,7 @@ export default function Dashboard() {
                     background: STATUS_COLORS[status],
                     height: '100%',
                     borderRadius: 6,
-                    transition: 'width 0.3s ease',
+                    transition: 'width 0.6s var(--ease-out)',
                   }} />
                 </div>
               </div>
@@ -90,10 +94,11 @@ export default function Dashboard() {
                   <div style={{ flex: 1, background: 'var(--jg-grey-100)', borderRadius: 6, height: 18, overflow: 'hidden' }}>
                     <div style={{
                       width: `${(count / maxTypeCount) * 100}%`,
-                      background: 'var(--jg-green-700)',
+                      background: 'linear-gradient(90deg, var(--jg-green-600), var(--jg-green-700))',
                       height: '100%',
                       borderRadius: 6,
                       minWidth: count > 0 ? 6 : 0,
+                      transition: 'width 0.6s var(--ease-out)',
                     }} />
                   </div>
                   <div className="text-mono" style={{ fontSize: 12.5, fontWeight: 700, width: 20, textAlign: 'right' }}>{count}</div>

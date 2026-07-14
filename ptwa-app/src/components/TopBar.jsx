@@ -45,14 +45,25 @@ export default function TopBar({ view, navigate, onLogout, onBack, canGoBack, on
 
   return (
     <>
+      <style>{`
+        @keyframes drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+        .tb-nav-btn { position: relative; }
+        .tb-nav-btn.active::after {
+          content: '';
+          position: absolute; left: 14px; right: 14px; bottom: 3px;
+          height: 2.5px; border-radius: 2px;
+          background: var(--jg-yellow-500);
+        }
+      `}</style>
       <header
-        className="no-print"
+        className="no-print glass-navy"
         style={{
-          background: 'var(--jg-navy-900)',
           color: 'white',
           position: 'sticky',
           top: 0,
           zIndex: 40,
+          boxShadow: '0 1px 0 rgba(255,255,255,0.06), 0 8px 24px -12px rgba(0,0,0,0.5)',
         }}
       >
         <div
@@ -87,6 +98,7 @@ export default function TopBar({ view, navigate, onLogout, onBack, canGoBack, on
                   objectFit: 'cover',
                   flexShrink: 0,
                   background: 'white',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
                 }}
               />
               <div style={{ lineHeight: 1.1, overflow: 'hidden' }}>
@@ -105,10 +117,10 @@ export default function TopBar({ view, navigate, onLogout, onBack, canGoBack, on
               <button
                 key={item.key}
                 onClick={() => navigate(item.key)}
-                className="btn btn-ghost btn-sm"
+                className={`btn btn-ghost btn-sm tb-nav-btn ${view === item.key ? 'active' : ''}`}
                 style={{
-                  color: view === item.key ? 'var(--jg-amber-600)' : 'white',
-                  background: 'transparent',
+                  color: view === item.key ? 'var(--jg-yellow-500)' : 'white',
+                  background: view === item.key ? 'rgba(255,255,255,0.08)' : 'transparent',
                 }}
               >
                 {item.label}
@@ -142,8 +154,10 @@ export default function TopBar({ view, navigate, onLogout, onBack, canGoBack, on
           className="no-print"
           onClick={() => setMenuOpen(false)}
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(22,32,28,0.5)', zIndex: 50,
+            position: 'fixed', inset: 0, background: 'rgba(10,16,26,0.55)', zIndex: 50,
             display: 'flex', justifyContent: 'flex-end',
+            backdropFilter: 'blur(2px)',
+            animation: 'overlay-in 0.2s ease both',
           }}
         >
           <div
@@ -152,6 +166,7 @@ export default function TopBar({ view, navigate, onLogout, onBack, canGoBack, on
               width: 270, background: 'white', height: '100%', padding: 20,
               display: 'flex', flexDirection: 'column', gap: 6,
               boxShadow: 'var(--shadow-pop)',
+              animation: 'drawer-in 0.28s var(--ease-out) both',
             }}
           >
             <div className="eyebrow" style={{ marginBottom: 8 }}>NAVIGATE</div>

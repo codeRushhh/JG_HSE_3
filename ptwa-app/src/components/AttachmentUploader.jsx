@@ -73,6 +73,7 @@ export default function AttachmentUploader({ attachments, onChange, signedUrls =
           fontSize: 13,
           background: dragOver ? 'var(--jg-green-50)' : 'transparent',
           marginBottom: 14,
+          transition: 'border-color 0.15s ease, background 0.15s ease',
         }}
       >
         Drag & drop files here under the selected category, or use "Choose File(s)". Files upload when you submit the permit.

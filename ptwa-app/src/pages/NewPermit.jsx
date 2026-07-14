@@ -153,7 +153,7 @@ export default function NewPermit({ navigate, editPermitId }) {
   }
 
   return (
-    <div className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
+    <div className="container page-enter" style={{ paddingTop: 24, paddingBottom: 60 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
         <div>
           <div className="eyebrow">{isEdit ? 'EDIT PERMIT' : 'NEW PERMIT TO WORK'}</div>
@@ -315,7 +315,13 @@ export default function NewPermit({ navigate, editPermitId }) {
           </FieldGrid>
         </FormSection>
 
-        <div style={{ display: 'flex', gap: 10, position: 'sticky', bottom: 14, marginTop: 8 }}>
+        <div
+          className="glass-panel"
+          style={{
+            display: 'flex', gap: 10, position: 'sticky', bottom: 14, marginTop: 8,
+            padding: 10, borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-hover)',
+          }}
+        >
           <button type="button" className="btn btn-secondary" onClick={() => navigate('home')} disabled={submitting}>Cancel</button>
           <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={submitting}>
             {submitting ? 'Saving…' : isEdit ? 'Save Changes' : 'Submit Permit'}

@@ -60,6 +60,12 @@ tables uses "if not exists" / "on conflict do nothing", so your existing
 PTWA data is completely untouched — this is safe to run even though those
 tables are already there.
 
+**This script also now permanently sets the PTWA login password to `2526`.**
+It creates the `hse@josephgroup.app` login if it doesn't exist yet, or resets
+its password to `2526` if it does — either way, after running this once,
+logging into PTWA with password `2526` will work. Re-run this same script
+any time in the future if you ever want to reset the password back to `2526`.
+
 ---
 
 ## Step 4: Push to GitHub, deploy on Netlify

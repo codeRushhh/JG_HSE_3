@@ -50,7 +50,7 @@ export default function RegisterPage({ navigate }) {
   };
 
   return (
-    <div className="container" style={{ paddingTop: 24, paddingBottom: 50 }}>
+    <div className="container page-enter" style={{ paddingTop: 24, paddingBottom: 50 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <div>
           <div className="eyebrow">HSE-REG-PTW-01</div>
@@ -102,7 +102,7 @@ export default function RegisterPage({ navigate }) {
             <div style={{ fontSize: 13.5 }}>Adjust your search/filters, or raise a new permit.</div>
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 900 }}>
+          <table className="modern-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5, minWidth: 900 }}>
             <thead>
               <tr style={{ background: 'var(--jg-grey-50)', textAlign: 'left' }}>
                 <th className="no-print" style={{ padding: '10px 12px' }}>

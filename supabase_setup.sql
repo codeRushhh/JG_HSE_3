@@ -174,8 +174,55 @@ create policy "HSE delete attachments"
 on storage.objects for delete
 using (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
 
+-- ---------------------------------------------------------------
+-- PART 3 — Permanently set the single HSE login account & password.
+-- Safe to re-run any time: if the account exists, this resets its
+-- password to 2526; if it doesn't exist yet, this creates it. This
+-- is how you "permanently" fix the PTWA password from now on —
+-- just re-run this block in the SQL Editor whenever you want to
+-- reset it, instead of hunting for the user in Authentication ->
+-- Users (which is also fine to use, but this is more reliable).
+-- ---------------------------------------------------------------
+create extension if not exists pgcrypto;
+
+do $$
+declare
+  hse_uid uuid;
+begin
+  select id into hse_uid from auth.users where email = 'hse@josephgroup.app';
+
+  if hse_uid is null then
+    hse_uid := gen_random_uuid();
+    insert into auth.users (
+      instance_id, id, aud, role, email, encrypted_password,
+      email_confirmed_at, created_at, updated_at,
+      raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token
+    ) values (
+      '00000000-0000-0000-0000-000000000000', hse_uid, 'authenticated', 'authenticated',
+      'hse@josephgroup.app', crypt('2526', gen_salt('bf')),
+      now(), now(), now(),
+      '{"provider":"email","providers":["email"]}', '{}', false, ''
+    );
+
+    insert into auth.identities (
+      id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+    ) values (
+      gen_random_uuid(), hse_uid, hse_uid,
+      jsonb_build_object('sub', hse_uid::text, 'email', 'hse@josephgroup.app'),
+      'email', now(), now(), now()
+    );
+  else
+    update auth.users
+    set encrypted_password = crypt('2526', gen_salt('bf')),
+        email_confirmed_at = coalesce(email_confirmed_at, now()),
+        updated_at = now()
+    where id = hse_uid;
+  end if;
+end $$;
+
 -- ============================================================
 -- Done. Check it worked any time with:
 -- select key from kv_store order by updated_at desc limit 10;
 -- select permit_no, status from permits order by created_at desc limit 10;
+-- select email, email_confirmed_at from auth.users where email = 'hse@josephgroup.app';
 -- ============================================================

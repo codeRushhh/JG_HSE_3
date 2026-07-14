@@ -93,7 +93,7 @@ export default function PermitDetail({ permitId, navigate }) {
   }
 
   return (
-    <div className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
+    <div className="container page-enter" style={{ paddingTop: 24, paddingBottom: 60 }}>
       <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
         <div>
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('register')} style={{ marginBottom: 8, paddingLeft: 0 }}>← Back to Register</button>
