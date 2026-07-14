@@ -1,117 +1,97 @@
 # Joseph Group HSE Portal — merged app
 
-This combines your three apps into one:
+This combines FOUR apps into one:
 
 - **Joseph Group HSE Inspections** (11-module React app)
-- **JGM Site Safety** (ADNOC / ENOC / EMARAT / CIVIL)
-- **JA Installation** (site safety inspections)
+- **JGM** (Joseph General Maintenance — site safety inspections)
+- **JPTS** (Joseph Projects & Traffic Signs — site safety inspections)
+- **PTW** (Permit to Work app)
 
-...behind **one PIN login** and **one dashboard** with a tile for each app,
-all saving into **one new Supabase project** you'll create.
+...behind one tap-to-enter cover page and **one dashboard** with a tile for
+each app — all four sharing **ONE Supabase database**: your existing PTWA
+project.
 
 ---
 
 ## ⭐ You only need to edit ONE file: `credentials.txt`
 
-Every other file in this project is already finished — you never need to
-open, edit, or rename any `.js` or `.html` file. Just:
+Every other file in this project is already finished. Just:
 
-1. Create a new Supabase project (Step 1 below)
-2. Open `credentials.txt` in Notepad (it's a normal text file, opens fine)
-3. Paste in your two values
-4. Save it
-5. Push everything to GitHub → deploy on Netlify
+1. Open `credentials.txt` (double-click, opens in Notepad)
+2. Paste in your **existing PTWA Supabase project's** URL and anon key
+3. Save
+4. Push to GitHub → deploy on Netlify
 
-The build process reads `credentials.txt` automatically and fills the
-values into all three apps for you.
+The build process reads `credentials.txt` and wires all four apps to that
+one database automatically.
 
 ---
 
-## Step 1: Create the new Supabase project
+## Step 1: Get your existing PTWA Supabase credentials
 
-1. Go to **supabase.com** → sign up / log in → **New project**
-2. Name it anything (e.g. `joseph-group-hse-portal`), set a password, pick
-   a region close to the UAE
-3. Click **Create new project** and wait ~1-2 minutes
-
-Then get your two values:
-
-1. Click the **gear icon (Settings)** on the left sidebar
-2. Click **API**
-3. Copy the **Project URL** (looks like `https://xxxxx.supabase.co`)
-4. Copy the **anon public** key (a long string)
+1. Go to **supabase.com** and log in
+2. Open the Supabase project your **live PTWA app** already uses
+3. Click the **gear icon (Settings)** on the left sidebar → **API**
+4. Copy the **Project URL**
+5. Copy the **anon public** key
 
 ---
 
 ## Step 2: Edit `credentials.txt`
 
-1. In the unzipped folder, double-click `credentials.txt` — it opens in
-   Notepad normally (it's a real `.txt` file, no tricks needed)
-2. You'll see:
-   ```
-   SUPABASE_URL=YOUR_SUPABASE_URL
-   SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-   ```
-3. Replace `YOUR_SUPABASE_URL` with the Project URL you copied (no quote
-   marks, no spaces)
-4. Replace `YOUR_SUPABASE_ANON_KEY` with the anon public key you copied
-5. Save (Ctrl+S) and close Notepad
+1. Double-click `credentials.txt` in this folder
+2. Replace `YOUR_SUPABASE_URL` and `YOUR_SUPABASE_ANON_KEY` with the two
+   values from Step 1 (no quote marks, no spaces)
+3. Save and close
 
-That's the only editing you'll ever do. Everything else is already built.
+That's the only editing you'll do.
 
 ---
 
-## Step 3: Set up the database table
+## Step 3: Run the SQL (adds one new table, doesn't touch PTWA's data)
 
-1. In Supabase, click **SQL Editor** → **New query**
-2. Open `supabase_setup.sql` from the folder, select all, copy it
+1. In that same Supabase project, click **SQL Editor** → **New query**
+2. Open `supabase_setup.sql` from this folder, select all, copy it
 3. Paste into the Supabase SQL box, click **Run**
-4. You should see a "Success" message
+
+This script only **adds** one new table (`kv_store`) that Joseph Group
+Inspections, JGM, and JPTS will use. Every statement for PTWA's existing
+tables uses "if not exists" / "on conflict do nothing", so your existing
+PTWA data is completely untouched — this is safe to run even though those
+tables are already there.
 
 ---
 
-## Step 4: Push to GitHub
+## Step 4: Push to GitHub, deploy on Netlify
 
-1. Create a new GitHub repo (e.g. `joseph-group-hse-portal`)
-2. Push this whole `merged` folder to it (including `credentials.txt` with
-   your real values — this is fine to commit; Supabase's "anon public" key
-   is designed to be safely visible in client-side code)
-
----
-
-## Step 5: Deploy on Netlify
-
-1. Go to **netlify.com** → **Add new site** → **Import an existing project**
-2. Pick your new GitHub repo
-3. Don't change any build settings — `netlify.toml` already has everything
-   configured
+1. Push the whole `merged` folder to a new GitHub repo
+2. In Netlify: **Add new site → Import an existing project** → pick the repo
+3. Don't change any build settings — `netlify.toml` is already configured
 4. Click **Deploy site**
-5. Wait a minute or two — Netlify will read `credentials.txt` automatically
-   during the build and wire up all three apps
-6. You'll get a link like `something.netlify.app` — open it
+5. Netlify builds both React apps (Joseph Group Inspections and PTWA),
+   copies JGM and JPTS in as static apps, and wires all four to your one
+   Supabase project using `credentials.txt`
 
-You should see one PIN login (default `2526`), then a dashboard with 3 tiles.
+You'll get a link like `something.netlify.app`. Open it:
+- Tap the Joseph Group logo to enter (no PIN)
+- You'll see a dashboard with 4 tiles: Joseph Group Inspections, JGM, JPTS, PTW
+- Each app has a "← Back to Portal" link so you can always get back
 
 **If the build fails**, check the Netlify build log — if `credentials.txt`
-still has placeholder text in it, the build will stop and tell you exactly
-that, rather than deploying a broken site.
+still has placeholder text, the build stops with a clear message instead of
+deploying a broken site.
 
 ---
 
-## Changing the portal PIN
+## What changed from the previous version
 
-Open `portal-index.html` (this one you're welcome to edit — it's plain
-HTML), find:
-
-```js
-const PORTAL_PIN = "2526";
-```
-
-Change the number, save, push to GitHub. Netlify redeploys automatically.
-
-Each app underneath still keeps its own original login too — the Joseph
-Group app's fixed PIN (`8080`), and JGM/JA's per-person HSE PINs and Team
-Leader mobile sign-in. The portal PIN is just the new front door on top.
+- Cover page no longer asks for a PIN — tap the Joseph Group logo to continue
+- Each tile now shows a real company logo (Joseph Group, JGM, JPTS)
+- JGM and JPTS renamed to match their real company names
+- Every app now has a way back to the portal
+- PTW (Permit to Work) added as a 4th tile
+- **All four apps now share ONE Supabase database** — your existing PTWA
+  project — instead of PTWA having its own separate one
 
 ---
 
@@ -120,12 +100,14 @@ Leader mobile sign-in. The portal PIN is just the new front door on top.
 ```
 merged/
 ├── credentials.txt          ← ⭐ the ONLY file you edit
-├── portal-index.html        ← the login + dashboard homepage (PIN is here)
+├── portal-index.html        ← cover page + dashboard (logo tap-to-enter)
 ├── portal-manifest.json
+├── joseph-group-logo.png / jgm-logo.png / jpts-logo.png
 ├── netlify.toml               ← tells Netlify how to build everything
 ├── build.sh                    ← runs automatically, reads credentials.txt
-├── supabase_setup.sql          ← run once in your new Supabase project
-├── joseph-group-app/           ← React source, credentials filled automatically
-├── jgm/                         ← JGM Site Safety, credentials filled automatically
-└── ja-installation/             ← JA Installation, credentials filled automatically
+├── supabase_setup.sql           ← run once in your PTWA Supabase project
+├── joseph-group-app/            ← React source, credentials filled automatically
+├── ptwa-app/                    ← PTWA React source, credentials filled automatically
+├── jgm/                          ← JGM, credentials filled automatically
+└── ja-installation/              ← JPTS, credentials filled automatically
 ```

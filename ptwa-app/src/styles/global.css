@@ -1,0 +1,270 @@
+/* ============================================================
+   Joseph Group PTWA — Design Tokens
+   Palette: safety green / charcoal / caution amber / permit paper
+   ============================================================ */
+:root {
+  /* Core brand palette — sampled directly from the Joseph Group logo mark */
+  --jg-navy-900: #16294D;
+  --jg-navy-700: #1B3B73;
+  --jg-navy-600: #24488C;
+  --jg-navy-100: #E4EAF5;
+  --jg-navy-50:  #F2F5FB;
+
+  --jg-green-900: #0A5C30;
+  --jg-green-700: #0C8A46;
+  --jg-green-600: #12A354;
+  --jg-green-100: #DFF3E7;
+  --jg-green-50:  #F0FAF4;
+
+  --jg-blue-600: #0091C9;
+  --jg-blue-100: #DCF1FA;
+
+  --jg-amber-600: #E08A2B;
+  --jg-amber-100: #FBEAD5;
+
+  --jg-red-600: #C23B2E;
+  --jg-red-100: #F8E1DE;
+
+  --jg-yellow-500: #F0BB1C;
+
+  --jg-charcoal-900: #182225;
+  --jg-charcoal-700: #37433F;
+  --jg-charcoal-500: #626E68;
+  --jg-charcoal-300: #9AA7A0;
+
+  --jg-paper: #FBFAF6;
+  --jg-paper-line: #E4E1D6;
+  --jg-grey-50: #F4F5F3;
+  --jg-grey-100: #ECEEEA;
+  --jg-grey-200: #DDE1DC;
+  --jg-white: #FFFFFF;
+
+  /* Signature brand stripe — mirrors the paint-swirl order in the logo mark */
+  --jg-swirl: linear-gradient(90deg, #E44830 0%, #F09048 26%, #F0BB1C 50%, #0C9048 74%, #0091C9 100%);
+
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 1px 2px rgba(22, 32, 28, 0.06), 0 4px 16px rgba(22, 32, 28, 0.05);
+  --shadow-pop: 0 8px 28px rgba(22, 32, 28, 0.14);
+}
+
+.brand-stripe {
+  height: 4px;
+  width: 100%;
+  background: var(--jg-swirl);
+  border: none;
+  flex-shrink: 0;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--jg-grey-50);
+  color: var(--jg-charcoal-900);
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(22,32,28,0.035) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+button, input, select, textarea { font-family: inherit; }
+
+::selection { background: var(--jg-green-100); color: var(--jg-green-900); }
+
+a { color: var(--jg-green-700); }
+
+:focus-visible {
+  outline: 2.5px solid var(--jg-amber-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+  color: var(--jg-charcoal-900);
+  margin: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jg-green-700);
+}
+
+.scroll-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-area::-webkit-scrollbar-thumb { background: var(--jg-grey-200); border-radius: 8px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+
+/* Buttons ---------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 13px 20px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 48px;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-primary { background: var(--jg-green-700); color: var(--jg-white); }
+.btn-primary:hover { background: var(--jg-green-900); }
+
+.btn-secondary { background: var(--jg-white); color: var(--jg-charcoal-900); border: 1.5px solid var(--jg-grey-200); }
+.btn-secondary:hover { border-color: var(--jg-green-700); color: var(--jg-green-700); }
+
+.btn-amber { background: var(--jg-amber-600); color: var(--jg-white); }
+.btn-danger { background: var(--jg-red-600); color: var(--jg-white); }
+
+.btn-ghost { background: transparent; color: var(--jg-charcoal-700); }
+.btn-ghost:hover { background: var(--jg-grey-100); }
+
+.btn-block { width: 100%; }
+.btn-sm { padding: 9px 14px; font-size: 13px; min-height: 38px; border-radius: var(--radius-sm); }
+
+/* Cards -------------------------------------------------------*/
+.card {
+  background: var(--jg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--jg-grey-100);
+}
+
+.paper-card {
+  background: var(--jg-paper);
+  border: 1px dashed var(--jg-paper-line);
+  border-radius: var(--radius-md);
+}
+
+/* Form elements ------------------------------------------------*/
+.field-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--jg-charcoal-700);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.field-input, .field-select, .field-textarea {
+  width: 100%;
+  border: 1.5px solid var(--jg-grey-200);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 15px;
+  background: var(--jg-white);
+  color: var(--jg-charcoal-900);
+  transition: border-color 0.12s ease;
+  min-height: 46px;
+}
+
+.field-textarea { min-height: 90px; resize: vertical; }
+
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+  border-color: var(--jg-green-700);
+  outline: none;
+}
+
+.field-hint { font-size: 12px; color: var(--jg-charcoal-500); margin-top: 5px; }
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--jg-grey-200);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+  background: var(--jg-white);
+}
+.checkbox-row:hover { border-color: var(--jg-green-600); }
+.checkbox-row.checked { border-color: var(--jg-green-700); background: var(--jg-green-50); }
+.checkbox-row input { margin-top: 2px; width: 18px; height: 18px; accent-color: var(--jg-green-700); flex-shrink: 0; }
+
+/* Status badges --------------------------------------------------*/
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.status-Active { background: var(--jg-green-100); color: var(--jg-green-900); }
+.status-Active::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--jg-green-700); }
+.status-JobCompleted { background: var(--jg-blue-100); color: var(--jg-blue-600); }
+.status-Suspended { background: var(--jg-amber-100); color: var(--jg-amber-600); }
+.status-Cancelled { background: var(--jg-red-100); color: var(--jg-red-600); }
+.status-Revalidated { background: var(--jg-navy-100); color: var(--jg-navy-700); }
+
+/* Stamp element — the app's signature motif -----------------------*/
+.stamp {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 3px solid currentColor;
+  border-radius: 8px;
+  padding: 6px 14px;
+  display: inline-block;
+  transform: rotate(-4deg);
+  opacity: 0.9;
+}
+
+/* Utility -----------------------------------------------------*/
+.container { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.text-mono { font-family: var(--font-mono); }
+.text-muted { color: var(--jg-charcoal-500); }
+
+@media (max-width: 720px) {
+  .field-grid { grid-template-columns: 1fr !important; }
+  .tb-desktop-nav { display: none !important; }
+  .container { padding: 0 14px; }
+}
+
+@media (min-width: 900px) {
+  .tb-desktop-nav { display: flex !important; gap: 4px; }
+}
+
+@media print {
+  body { background: white !important; background-image: none !important; }
+  .no-print { display: none !important; }
+  .container { max-width: 100% !important; padding: 0 !important; }
+  #printable-permit, table { box-shadow: none !important; border: none !important; }
+  .card { box-shadow: none !important; }
+}

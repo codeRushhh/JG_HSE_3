@@ -136,6 +136,11 @@ export default function LoginScreen({ onLoginSuccess } = {}) {
         <button style={buttonPrimary} onClick={handleLogin} disabled={loading}>
           {loading ? "Checking..." : "Log in"}
         </button>
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <a href="/" style={{ fontSize: 13, color: "#8a8778", textDecoration: "underline" }}>
+            ← Back to Portal
+          </a>
+        </div>
       </div>
     </div>
   );

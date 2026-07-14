@@ -29,45 +29,42 @@
   header p{margin:6px 0 0; font-size:13px; opacity:.85;}
   .wrap{max-width:520px; margin:0 auto; padding:20px;}
 
-  /* Login screen */
-  #login-screen{display:flex; flex-direction:column; align-items:center; padding-top:40px;}
-  .login-card{
-    background:var(--card); border-radius:16px; padding:28px 24px; width:100%; max-width:340px;
-    box-shadow:0 4px 20px rgba(15,42,92,.08); text-align:center;
+  /* Cover screen — click the group icon to enter */
+  #cover-screen{display:flex; flex-direction:column; align-items:center; padding-top:56px;}
+  #cover-screen .hint{margin-top:22px; font-size:13px; color:var(--muted); text-align:center;}
+  .cover-btn{
+    background:none; border:none; padding:0; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:16px;
   }
-  .login-card h2{margin:0 0 6px; font-size:17px;}
-  .login-card p{margin:0 0 20px; font-size:13px; color:var(--muted);}
-  #pin-input{
-    width:100%; padding:14px; font-size:22px; text-align:center; letter-spacing:8px;
-    border:1.5px solid #dfe3ea; border-radius:10px; outline:none; margin-bottom:14px;
+  .cover-logo{
+    width:140px; height:140px; border-radius:32px; background:var(--card);
+    box-shadow:0 6px 24px rgba(15,42,92,.14); display:flex; align-items:center; justify-content:center;
+    padding:20px; transition:transform .15s ease;
   }
-  #pin-input:focus{border-color:var(--accent);}
-  .btn{
-    display:block; width:100%; padding:13px; border:none; border-radius:10px;
-    background:var(--navy); color:#fff; font-size:15px; font-weight:600; cursor:pointer;
-  }
-  .btn:active{opacity:.85;}
-  #login-error{color:#c0392b; font-size:13px; margin-top:10px; min-height:16px;}
+  .cover-btn:active .cover-logo{transform:scale(.96);}
+  .cover-logo img{width:100%; height:100%; object-fit:contain;}
+  .cover-label{font-size:14px; font-weight:600; color:var(--navy);}
 
   /* Dashboard */
   #dashboard-screen{display:none;}
   .section-label{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:22px 4px 10px;}
   .tile{
     display:flex; align-items:center; gap:14px; background:var(--card); border-radius:14px;
-    padding:18px; margin-bottom:12px; box-shadow:0 2px 10px rgba(15,42,92,.06);
+    padding:16px; margin-bottom:12px; box-shadow:0 2px 10px rgba(15,42,92,.06);
     text-decoration:none; color:var(--text); border:1px solid #eef0f4;
   }
   .tile:active{transform:scale(.99);}
   .tile-icon{
-    width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center;
-    font-size:20px; color:#fff; flex-shrink:0;
+    width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; background:#fff; border:1px solid #eef0f4; overflow:hidden; padding:6px;
   }
+  .tile-icon img{width:100%; height:100%; object-fit:contain;}
   .tile-text h3{margin:0 0 3px; font-size:15px;}
   .tile-text p{margin:0; font-size:12.5px; color:var(--muted);}
   .tile-arrow{margin-left:auto; color:#c3c9d3; font-size:18px;}
 
-  #logout-bar{text-align:center; margin-top:24px;}
-  #logout-bar button{
+  #back-bar{text-align:center; margin-top:24px;}
+  #back-bar button{
     background:none; border:none; color:var(--muted); font-size:13px; text-decoration:underline; cursor:pointer;
   }
 </style>
@@ -76,20 +73,18 @@
 
 <header>
   <h1>Joseph Group HSE Portal</h1>
-  <p>Inspections · Site Safety · Installation</p>
+  <p>Inspections · Site Safety · Installation · Permits</p>
 </header>
 
 <div class="wrap">
 
-  <!-- LOGIN -->
-  <div id="login-screen">
-    <div class="login-card">
-      <h2>Enter PIN</h2>
-      <p>4-digit HSE access PIN</p>
-      <input id="pin-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••">
-      <button class="btn" onclick="tryLogin()">Enter</button>
-      <div id="login-error"></div>
-    </div>
+  <!-- COVER -->
+  <div id="cover-screen">
+    <button class="cover-btn" onclick="showDashboard()">
+      <div class="cover-logo"><img src="joseph-group-logo.png" alt="Joseph Group"></div>
+      <div class="cover-label">Tap to continue</div>
+    </button>
+    <div class="hint">Joseph Group — Since 1978</div>
   </div>
 
   <!-- DASHBOARD -->
@@ -97,7 +92,7 @@
     <div class="section-label">Choose an application</div>
 
     <a class="tile" href="joseph-group/">
-      <div class="tile-icon" style="background:#0e6fb5;">🧰</div>
+      <div class="tile-icon"><img src="joseph-group-logo.png" alt="Joseph Group"></div>
       <div class="tile-text">
         <h3>Joseph Group HSE Inspections</h3>
         <p>Fire, electrical, ladder, harness &amp; incident modules</p>
@@ -106,60 +101,46 @@
     </a>
 
     <a class="tile" href="jgm/">
-      <div class="tile-icon" style="background:#163878;">🏗️</div>
+      <div class="tile-icon"><img src="jgm-logo.png" alt="JGM"></div>
       <div class="tile-text">
-        <h3>JGM Site Safety</h3>
-        <p>ADNOC · ENOC · EMARAT · CIVIL daily inspections</p>
+        <h3>JGM</h3>
+        <p>Joseph General Maintenance — daily site safety inspections</p>
       </div>
       <div class="tile-arrow">›</div>
     </a>
 
     <a class="tile" href="ja-installation/">
-      <div class="tile-icon" style="background:#1b3c77;">🔧</div>
+      <div class="tile-icon"><img src="jpts-logo.png" alt="JPTS"></div>
       <div class="tile-text">
-        <h3>JA Installation</h3>
-        <p>Site safety inspections for installation teams</p>
+        <h3>JPTS</h3>
+        <p>Joseph Projects &amp; Traffic Signs — site safety inspections</p>
       </div>
       <div class="tile-arrow">›</div>
     </a>
 
-    <div id="logout-bar"><button onclick="logout()">Log out</button></div>
+    <a class="tile" href="ptwa/">
+      <div class="tile-icon"><img src="joseph-group-logo.png" alt="PTW"></div>
+      <div class="tile-text">
+        <h3>PTW</h3>
+        <p>Permit to Work Application</p>
+      </div>
+      <div class="tile-arrow">›</div>
+    </a>
+
+    <div id="back-bar"><button onclick="showCover()">← Back</button></div>
   </div>
 
 </div>
 
 <script>
-  const PORTAL_PIN = "2526"; // Change this any time — see README for how.
-  const SESSION_KEY = "jg_portal_session";
-
-  function tryLogin(){
-    const val = document.getElementById("pin-input").value.trim();
-    const err = document.getElementById("login-error");
-    if(val.length !== 4){ err.textContent = "Enter the 4-digit PIN."; return; }
-    if(val !== PORTAL_PIN){ err.textContent = "Incorrect PIN."; return; }
-    sessionStorage.setItem(SESSION_KEY, "1");
-    showDashboard();
-  }
-
-  function logout(){
-    sessionStorage.removeItem(SESSION_KEY);
-    document.getElementById("pin-input").value = "";
-    document.getElementById("login-error").textContent = "";
-    document.getElementById("dashboard-screen").style.display = "none";
-    document.getElementById("login-screen").style.display = "flex";
-  }
-
   function showDashboard(){
-    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("cover-screen").style.display = "none";
     document.getElementById("dashboard-screen").style.display = "block";
   }
-
-  document.getElementById("pin-input").addEventListener("keydown", (e) => {
-    if(e.key === "Enter") tryLogin();
-  });
-
-  // Stay logged in for this browser tab session
-  if(sessionStorage.getItem(SESSION_KEY) === "1"){ showDashboard(); }
+  function showCover(){
+    document.getElementById("dashboard-screen").style.display = "none";
+    document.getElementById("cover-screen").style.display = "flex";
+  }
 </script>
 
 </body>

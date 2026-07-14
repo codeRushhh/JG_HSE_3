@@ -1,48 +1,15 @@
 -- ============================================================
--- Joseph Group HSE Portal — Supabase setup
--- Run this ONCE in your existing PTWA Supabase project's SQL Editor.
---
--- Safe to run even though PTWA's tables already exist in this
--- project — every statement below uses "if not exists" / "on
--- conflict do nothing", so it will not touch or duplicate any of
--- your existing PTWA data. It only ADDS the one new table that
--- Joseph Group Inspections, JGM, and JPTS need.
+-- Joseph Group PTWA — Supabase schema (Phase 2)
+-- Run this once in Supabase: Project → SQL Editor → New query → paste → Run
 -- ============================================================
 
--- ---------------------------------------------------------------
--- PART 1 — shared key/value table used by:
---   Joseph Group Inspections (keys prefixed "jg:")
---   JGM                       (keys prefixed "jgm:")
---   JPTS / JA Installation    (keys prefixed "ja:")
--- ---------------------------------------------------------------
-create table if not exists kv_store (
-  key text primary key,
-  value jsonb,
-  updated_at timestamptz default now()
-);
-
-alter table kv_store enable row level security;
-
-drop policy if exists "public read" on kv_store;
-create policy "public read" on kv_store for select using (true);
-
-drop policy if exists "public write" on kv_store;
-create policy "public write" on kv_store for insert with check (true);
-
-drop policy if exists "public update" on kv_store;
-create policy "public update" on kv_store for update using (true);
-
-drop policy if exists "public delete" on kv_store;
-create policy "public delete" on kv_store for delete using (true);
-
--- ---------------------------------------------------------------
--- PART 2 — PTWA's tables (included here so a brand-new project
--- can be set up with ONE script too). If you're running this in
--- your existing PTWA project, everything below already exists and
--- these statements will simply do nothing.
--- ---------------------------------------------------------------
 create extension if not exists "uuid-ossp";
 
+-- ---------------------------------------------------------------
+-- 1. Race-safe sequential permit numbering (JG-HSE-PTW-001, 002, ...)
+--    A single-row counter table + function so two devices submitting
+--    at the same moment can never receive the same number.
+-- ---------------------------------------------------------------
 create table if not exists permit_counter (
   id int primary key default 1,
   value int not null default 0,
@@ -58,6 +25,9 @@ as $$
   update permit_counter set value = value + 1 where id = 1 returning value;
 $$;
 
+-- ---------------------------------------------------------------
+-- 2. Core permits table — mirrors every field on the PTW form + Register
+-- ---------------------------------------------------------------
 create table if not exists permits (
   id uuid primary key default uuid_generate_v4(),
   permit_no text unique not null,
@@ -120,6 +90,10 @@ create trigger trg_permits_updated_at
 before update on permits
 for each row execute function set_updated_at();
 
+-- ---------------------------------------------------------------
+-- 3. Attachment metadata — the actual files live in Storage bucket
+--    'ptw-attachments'; this table just indexes them per permit.
+-- ---------------------------------------------------------------
 create table if not exists permit_attachments (
   id uuid primary key default uuid_generate_v4(),
   permit_id uuid references permits(id) on delete cascade,
@@ -133,49 +107,56 @@ create table if not exists permit_attachments (
 
 create index if not exists idx_attachments_permit on permit_attachments(permit_id);
 
+-- ---------------------------------------------------------------
+-- 4. Row Level Security
+--    Single HSE login → one authenticated Supabase Auth user.
+--    Any authenticated session gets full access; anonymous gets none.
+-- ---------------------------------------------------------------
 alter table permits enable row level security;
 alter table permit_attachments enable row level security;
 alter table permit_counter enable row level security;
 
-drop policy if exists "HSE full access - permits" on permits;
 create policy "HSE full access - permits"
 on permits for all
 using (auth.role() = 'authenticated')
 with check (auth.role() = 'authenticated');
 
-drop policy if exists "HSE full access - attachments" on permit_attachments;
 create policy "HSE full access - attachments"
 on permit_attachments for all
 using (auth.role() = 'authenticated')
 with check (auth.role() = 'authenticated');
 
-drop policy if exists "HSE full access - counter" on permit_counter;
 create policy "HSE full access - counter"
 on permit_counter for all
 using (auth.role() = 'authenticated')
 with check (auth.role() = 'authenticated');
 
+-- ---------------------------------------------------------------
+-- 5. Storage bucket for attached documents / photos
+-- ---------------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('ptw-attachments', 'ptw-attachments', false)
 on conflict (id) do nothing;
 
-drop policy if exists "HSE read attachments" on storage.objects;
 create policy "HSE read attachments"
 on storage.objects for select
 using (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
 
-drop policy if exists "HSE upload attachments" on storage.objects;
 create policy "HSE upload attachments"
 on storage.objects for insert
 with check (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
 
-drop policy if exists "HSE delete attachments" on storage.objects;
 create policy "HSE delete attachments"
 on storage.objects for delete
 using (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
 
 -- ============================================================
--- Done. Check it worked any time with:
--- select key from kv_store order by updated_at desc limit 10;
--- select permit_no, status from permits order by created_at desc limit 10;
+-- Done. Next steps (see README.md "Phase 2 — Supabase" section):
+--   1. Authentication → Users → Add user
+--        email:    hse@josephgroup.app
+--        password: 2526
+--        (auto-confirm the email)
+--   2. Project Settings → API → copy the Project URL and anon public key
+--   3. Add them as Netlify environment variables:
+--        VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 -- ============================================================
