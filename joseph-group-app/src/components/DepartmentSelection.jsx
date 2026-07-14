@@ -28,8 +28,8 @@ const DEPARTMENTS = [
   { code: "GRA", name: "Graphics", logoKey: "GRA", accent: "#7F77DD" },
   { code: "AS", name: "AS", logoKey: "AS", accent: "#B4972A" },
   { code: "P21", name: "PROTO21", logoKey: "P21", accent: "#5F5E5A" },
-  { code: "JPTS", name: "Joseph Project and Traffic Sign", logoKey: "JPTS", accent: "#0C447C" },
-  { code: "JGM", name: "Joseph General Maintenance", logoKey: "JGM", accent: "#1D9E75" }
+  { code: "JPTS", name: "JPTS", logoKey: "JPTS", accent: "#0C447C" },
+  { code: "JGM", name: "JGM", logoKey: "JGM", accent: "#1D9E75" }
 ];
 
 export default function DepartmentSelection({ onSelectDepartment } = {}) {

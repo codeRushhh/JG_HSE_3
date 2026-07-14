@@ -46,6 +46,7 @@ cp portal-manifest.json publish/manifest.json
 cp joseph-group-logo.png publish/joseph-group-logo.png
 cp jgm-logo.png publish/jgm-logo.png
 cp jpts-logo.png publish/jpts-logo.png
+cp ja-logo.png publish/ja-logo.png
 
 # Joseph Group Inspections (built React app — credentials already baked in via .env above)
 mkdir -p publish/joseph-group
