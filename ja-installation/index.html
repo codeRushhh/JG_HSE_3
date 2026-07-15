@@ -400,6 +400,57 @@ function fmtDate(str){
 }
 function nowIso(){ return new Date().toISOString(); }
 
+/* ===================== PHOTO HELPERS (compressed base64, stored inline in the report row) ===================== */
+const MAX_PHOTOS = 3;
+function readFileAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = ()=>reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+function compressImage(dataUrl, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      let {width, height} = img;
+      if(width > height && width > maxDim){ height = Math.round(height * (maxDim/width)); width = maxDim; }
+      else if(height >= width && height > maxDim){ width = Math.round(width * (maxDim/height)); height = maxDim; }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = ()=>reject(new Error("Could not read image"));
+    img.src = dataUrl;
+  });
+}
+async function handlePhotoFiles(fileList){
+  if(!fileList || !fileList.length) return;
+  const room = MAX_PHOTOS - state.photos.length;
+  if(room <= 0){ alert(`You can attach a maximum of ${MAX_PHOTOS} photos.`); return; }
+  const files = Array.from(fileList).slice(0, room);
+  state.photoBusy = true; render();
+  try{
+    for(const file of files){
+      if(!file.type.startsWith("image/")) continue;
+      const raw = await readFileAsDataURL(file);
+      const compressed = await compressImage(raw, 1280, 0.65);
+      state.photos.push(compressed);
+    }
+  }catch(e){ console.error("photo compress failed", e); alert("Couldn't process one of the photos. Please try again."); }
+  state.photoBusy = false;
+  render();
+  await saveDraft();
+}
+async function removePhoto(idx){
+  state.photos.splice(idx, 1);
+  render();
+  await saveDraft();
+}
+
 /* ===================== APP STATE ===================== */
 let state = {
   screen: "loading",
@@ -408,6 +459,8 @@ let state = {
   answers: {},
   manpower: "",
   comments: "",
+  photos: [],
+  photoBusy: false,
   activeReportDate: null,
   reportLocked: false,
   lockedPreview: null,
@@ -750,14 +803,15 @@ function tplTLForm(){
         <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--grey-border);font-size:13px;">
           <span>${item.label}</span><b>${(p.answers && p.answers[item.id]) || '—'}</b>
         </div>`).join("")}
+        ${p.photos && p.photos.length ? `<div style="margin-top:10px;"><b style="font-size:13px;">Site Photos:</b><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">${p.photos.map(src=>`<img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--grey-border);"/>`).join("")}</div></div>` : ""}
         <div style="margin-top:10px;"><span class="status-chip ${p.status==='submitted'?'submitted':'missing'}">${p.status==='submitted'?'WAS SUBMITTED':'NEVER SUBMITTED'}</span></div>
       ` : ""}
     </div>
     <button class="btn primary" data-act="pick-area" data-area="${state.selectedArea}">Start a New ${state.selectedArea} Report</button>
     `;
   }
-  const answered = CHECKLIST.filter(i=>state.answers[i.id]).length + (state.manpower!=="" && state.manpower!==null ? 1 : 0);
-  const totalFields = CHECKLIST.length + 1;
+  const answered = CHECKLIST.filter(i=>state.answers[i.id]).length + (state.manpower!=="" && state.manpower!==null ? 1 : 0) + (state.photos.length>0 ? 1 : 0);
+  const totalFields = CHECKLIST.length + 2;
   const pct = Math.round((answered/totalFields)*100);
   return `
   <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;"></div></div>
@@ -778,13 +832,39 @@ function tplTLForm(){
         <button class="pill-btn na ${state.answers[item.id]==='N/A'?'active':''}" data-act="answer" data-id="${item.id}" data-val="N/A">N/A</button>
       </div>
     </div>`).join("")}
+  ${tplPhotoSection(true)}
   <label class="field-label">Comments (optional)</label>
   <textarea id="tlComments" placeholder="Any observations or notes...">${escapeHtml(state.comments)}</textarea>
   <button class="btn primary" style="margin-top:18px;" data-act="go-review" ${answered<totalFields?"disabled":""}>
     Review Inspection
   </button>
-  ${answered<totalFields ? `<div style="text-align:center;font-size:12px;color:var(--text-soft);margin-top:8px;">Fill in Man Power and answer all ${CHECKLIST.length} items to continue</div>` : ""}
+  ${answered<totalFields ? `<div style="text-align:center;font-size:12px;color:var(--text-soft);margin-top:8px;">Fill in Man Power, answer all ${CHECKLIST.length} items, and attach at least 1 site photo to continue</div>` : ""}
   `;
+}
+
+/* ===================== TEAM LEADER: PHOTO UPLOAD UI ===================== */
+function tplPhotoSection(editable){
+  const photos = state.photos || [];
+  const thumbs = photos.map((src,idx)=>`
+    <div style="position:relative;width:84px;height:84px;flex-shrink:0;">
+      <img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--grey-border);"/>
+      ${editable ? `<button data-act="remove-photo" data-idx="${idx}" title="Remove photo" style="position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff;border:2px solid #fff;font-weight:800;font-size:13px;line-height:1;cursor:pointer;">×</button>` : ""}
+    </div>`).join("");
+  const addTile = (editable && photos.length < MAX_PHOTOS) ? `
+    <label for="tlPhotoInput" style="width:84px;height:84px;flex-shrink:0;border:2px dashed var(--grey-border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text-soft);font-size:11.5px;font-weight:700;text-align:center;gap:4px;">
+      <span style="font-size:22px;line-height:1;">+</span>Add Photo
+    </label>` : "";
+  return `
+  <div class="checklist-item">
+    <div class="qnum">SITE PHOTOS <span style="color:var(--danger);">*</span></div>
+    <div class="qtext">Attach 1–${MAX_PHOTOS} photos of the site (mandatory)</div>
+    ${editable ? `<input type="file" id="tlPhotoInput" accept="image/*" capture="environment" multiple style="display:none;"/>` : ""}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+      ${thumbs}${addTile}
+    </div>
+    ${state.photoBusy ? `<div style="font-size:12px;color:var(--text-soft);margin-top:8px;">Processing photo…</div>` : ""}
+    ${photos.length===0 ? `<div style="font-size:12px;color:var(--danger);margin-top:8px;">At least 1 photo is required before you can submit.</div>` : `<div style="font-size:12px;color:var(--text-soft);margin-top:8px;">${photos.length} of ${MAX_PHOTOS} photos attached</div>`}
+  </div>`;
 }
 
 /* ===================== TEAM LEADER: REVIEW ===================== */
@@ -806,6 +886,7 @@ function tplTLReview(){
         <b style="color:${state.answers[item.id]==='Yes'?'var(--success)':state.answers[item.id]==='No'?'var(--danger)':'var(--grey-mid)'}">${state.answers[item.id]}</b>
       </div>`).join("")}
     ${state.comments ? `<div style="margin-top:12px;font-size:13px;"><b>Comments:</b> ${escapeHtml(state.comments)}</div>` : ""}
+    ${state.photos && state.photos.length ? `<div style="margin-top:12px;"><b style="font-size:13px;">Site Photos:</b><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">${state.photos.map(src=>`<img src="${src}" style="width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--grey-border);"/>`).join("")}</div></div>` : ""}
   </div>
   <div class="btn-row">
     <button class="btn outline" data-act="back-to-form">${ICON.edit} Edit Answers</button>
@@ -1467,6 +1548,7 @@ function bindDynamicEvents(){
   bindEl("hseTlSearch", "input", e=>{ state.tlSearch = e.target.value; renderHseTabAsync(); });
   bindEl("reportSearch", "input", e=>{ state.reportSearch = e.target.value; renderHseTabAsync(); });
   bindEl("tlComments", "blur", e=>{ state.comments = e.target.value; saveDraft(); });
+  bindEl("tlPhotoInput", "change", e=>{ handlePhotoFiles(e.target.files); e.target.value = ""; });
   bindEl("manpowerInput", "input", e=>{ state.manpower = e.target.value; saveDraft(); });
   bindEl("manpowerInput", "blur", ()=>{ render(); });
   bindEl("rfArea", "change", e=>{ state.reportsFilter.area = e.target.value; renderHseTabAsync(); });
@@ -1508,6 +1590,10 @@ async function handleAction(e){
     saveDraft();
   }
   else if(act==="go-review"){ setState({screen:"tl_review"}); }
+  else if(act==="remove-photo"){
+    const idx = parseInt(el.getAttribute("data-idx"), 10);
+    await removePhoto(idx);
+  }
   else if(act==="back-to-form"){ setState({screen:"tl_form"}); }
   else if(act==="submit-inspection"){ await doSubmit(); }
   else if(act==="go-tl-home"){ setState({screen:"tl_home"}); }
@@ -1603,6 +1689,7 @@ async function startInspection(){
   state.answers = {};
   state.manpower = "";
   state.comments = "";
+  state.photos = [];
   state.activeReportDate = null;
   state.reportLocked = false;
   state.lockedPreview = null;
@@ -1622,6 +1709,7 @@ async function ensureDraftForArea(){
     state.answers = active.answers || {};
     state.manpower = (active.manpower !== undefined && active.manpower !== null) ? String(active.manpower) : "";
     state.comments = active.comments || "";
+    state.photos = active.photos || [];
     state.reportLocked = false;
     state.lockedPreview = null;
     state.reportExpiresAt = active.expiresAt || null;
@@ -1631,10 +1719,10 @@ async function ensureDraftForArea(){
       state.reportLocked = true;
       state.lockedPreview = expiredOne;
       state.activeReportDate = null;
-      state.answers = {}; state.manpower = ""; state.comments = "";
+      state.answers = {}; state.manpower = ""; state.comments = ""; state.photos = [];
     } else {
       state.activeReportDate = todayStr();
-      state.answers = {}; state.manpower = ""; state.comments = "";
+      state.answers = {}; state.manpower = ""; state.comments = ""; state.photos = [];
       state.reportLocked = false;
       state.lockedPreview = null;
       state.reportExpiresAt = null;
@@ -1659,6 +1747,7 @@ async function saveDraft(){
     answers: state.answers,
     manpower: state.manpower === "" ? null : Number(state.manpower),
     comments: state.comments,
+    photos: state.photos,
     compliance: calcCompliance(state.answers),
     status: (existing && existing.status === "submitted") ? "submitted" : "draft",
     createdAt, expiresAt,
@@ -1669,6 +1758,11 @@ async function saveDraft(){
 }
 async function doSubmit(){
   if(state.reportLocked || !state.activeReportDate) return;
+  if(!state.photos || state.photos.length === 0){
+    alert("Please attach at least 1 site photo before submitting.");
+    setState({screen:"tl_form"});
+    return;
+  }
   const key = rptKey(state.activeReportDate, state.currentTL.mobile, state.selectedArea);
   const existing = await storGet(key);
   if(isExpired(existing)){
@@ -1684,6 +1778,7 @@ async function doSubmit(){
     answers: state.answers,
     manpower: state.manpower === "" ? null : Number(state.manpower),
     comments: state.comments,
+    photos: state.photos,
     compliance: calcCompliance(state.answers),
     status: "submitted",
     createdAt, expiresAt,
@@ -1771,8 +1866,10 @@ async function deleteTL(mobile){
 }
 async function addArea(){
   const input = document.getElementById("newAreaName");
-  const name = input ? input.value.trim() : "";
-  if(!name){ alert("Please enter an area name."); return; }
+  const raw = input ? input.value.trim() : "";
+  if(!raw){ alert("Please enter an area name."); return; }
+  const name = raw.replace(/[^a-zA-Z0-9 &\-_/]/g, "").replace(/\s+/g, " ").trim().slice(0, 30);
+  if(!name){ alert("Please use letters, numbers or spaces for the area name."); return; }
   const list = await getAreasList();
   if(list.some(a=>a.name.trim().toLowerCase() === name.toLowerCase())){
     alert(`"${name}" already exists as a work area.`);
@@ -1929,6 +2026,7 @@ function openViewReportModal(date, mobile, area){
           <span>${item.label}</span><b>${r.answers[item.id]||'—'}</b>
         </div>`).join("")}
       ${r.comments?`<div style="margin-top:10px;font-size:13px;"><b>Comments:</b> ${escapeHtml(r.comments)}</div>`:""}
+      ${r.photos && r.photos.length ? `<div style="margin-top:10px;"><b style="font-size:13px;">Site Photos:</b><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">${r.photos.map(src=>`<a href="${src}" target="_blank" rel="noopener"><img src="${src}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--grey-border);"/></a>`).join("")}</div></div>` : `<div style="margin-top:10px;font-size:12px;color:var(--text-soft);">No photos attached.</div>`}
       <button class="btn outline" style="margin-top:16px;" data-act="modal-close">Close</button>
     `);
   });
