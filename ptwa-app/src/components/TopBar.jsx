@@ -218,7 +218,7 @@ export default function TopBar({ view, navigate, onLogout, onBack, canGoBack, on
 
             <div style={{ borderTop: '1px solid var(--jg-grey-100)', margin: '12px 0' }} />
             <button
-              onClick={() => { window.location.href = '/'; }}
+              onClick={async () => { await onLogout(); window.location.href = '/'; }}
               className="btn btn-ghost"
               style={{ justifyContent: 'flex-start' }}
             >

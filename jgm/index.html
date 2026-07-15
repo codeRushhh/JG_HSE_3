@@ -335,21 +335,22 @@ try{
    share the same kv_store table as the Joseph Group and JA Installation apps
    without ever colliding with their keys. */
 const APP_NS = "jgm:";
+let lastStorError = null;
 async function storGet(key){
-  if(!dbReady) return null;
+  if(!dbReady){ lastStorError = "Database not configured (credentials.txt placeholders were never filled in during build)."; return null; }
   try{
     const {data, error} = await sb.from("kv_store").select("value").eq("key", APP_NS+key).maybeSingle();
     if(error) throw error;
     return data ? data.value : null;
-  }catch(e){ console.error("storGet failed", key, e); return null; }
+  }catch(e){ lastStorError = e.message || String(e); console.error("storGet failed", key, e); return null; }
 }
 async function storSet(key, val){
-  if(!dbReady) return false;
+  if(!dbReady){ lastStorError = "Database not configured (credentials.txt placeholders were never filled in during build)."; return false; }
   try{
     const {error} = await sb.from("kv_store").upsert({key: APP_NS+key, value: val, updated_at: new Date().toISOString()});
     if(error) throw error;
     return true;
-  }catch(e){ console.error("storSet failed", key, e); return false; }
+  }catch(e){ lastStorError = e.message || String(e); console.error("storSet failed", key, e); return false; }
 }
 async function storDelete(key){
   if(!dbReady) return false;
@@ -1667,7 +1668,7 @@ async function doHseSetupPin(){
   if(others.some(o=>o && o.pin === pin)){ errEl.textContent = "That PIN is already used by another HSE member. Please choose a different one."; return; }
   const ok = await storSet(hsePinKey(name), {pin, setAt: nowIso()});
   if(!ok){
-    errEl.textContent = "Couldn't save your PIN — check your internet connection and try again. (If this keeps happening, the database may be unreachable.)";
+    errEl.textContent = "Couldn't save your PIN — " + (lastStorError || "unknown error") + ". Check the browser console for details.";
     return;
   }
   hsePinStatuses[name] = true;

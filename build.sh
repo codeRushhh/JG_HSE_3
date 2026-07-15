@@ -47,6 +47,9 @@ cp joseph-group-logo.png publish/joseph-group-logo.png
 cp jgm-logo.png publish/jgm-logo.png
 cp jpts-logo.png publish/jpts-logo.png
 cp ja-logo.png publish/ja-logo.png
+cp portal-icon-192.png publish/portal-icon-192.png
+cp portal-icon-512.png publish/portal-icon-512.png
+cp portal-apple-touch-icon.png publish/portal-apple-touch-icon.png
 
 # Joseph Group Inspections (built React app — credentials already baked in via .env above)
 mkdir -p publish/joseph-group
