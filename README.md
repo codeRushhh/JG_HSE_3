@@ -55,16 +55,18 @@ That's the only editing you'll do.
 3. Paste into the Supabase SQL box, click **Run**
 
 This script only **adds** one new table (`kv_store`) that Joseph Group
-Inspections, JGM, and JPTS will use. Every statement for PTWA's existing
-tables uses "if not exists" / "on conflict do nothing", so your existing
-PTWA data is completely untouched — this is safe to run even though those
-tables are already there.
+Inspections, JGM, and JPTS will use, plus PTWA's own tables if this is a
+brand-new project. Every statement uses "if not exists" / "on conflict do
+nothing", so if you're running this in your existing PTWA project, none of
+your existing data is touched.
 
-**This script also now permanently sets the PTWA login password to `2526`.**
-It creates the `hse@josephgroup.app` login if it doesn't exist yet, or resets
-its password to `2526` if it does — either way, after running this once,
-logging into PTWA with password `2526` will work. Re-run this same script
-any time in the future if you ever want to reset the password back to `2526`.
+**PTWA's password (`2526`) is no longer stored in the database at all.**
+It used to rely on a Supabase Auth account (`hse@josephgroup.app`) that had
+to exist in whichever project PTWA was pointed at — which is exactly why it
+kept breaking every time the database changed. Now the password is checked
+inside the app itself, the same way JGM and JA Installation work, so it
+works immediately in any Supabase project as soon as this SQL has been run
+— no separate account to create or reset.
 
 ---
 
@@ -98,6 +100,15 @@ deploying a broken site.
 - PTW (Permit to Work) added as a 4th tile
 - **All four apps now share ONE Supabase database** — your existing PTWA
   project — instead of PTWA having its own separate one
+- **PTWA's password is now checked in the app itself (2526)**, not via a
+  Supabase Auth account — fixes the "Incorrect password, or unable to reach
+  the server" error that happened whenever the database changed, and means
+  the login screen reappears every time the app/browser is fully closed
+  (it no longer stays silently logged in forever)
+- **JGM and JA Installation's HSE PIN setup is more reliable** — if saving a
+  PIN fails (e.g. a network hiccup), you now see a clear error message
+  instead of being silently sent to the dashboard with nothing actually
+  saved, which was causing the "asks me to set up my PIN every time" issue
 
 ---
 

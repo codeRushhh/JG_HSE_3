@@ -9,40 +9,40 @@
  * ------------------------------------------------------------------
  */
 
-import { supabase, HSE_EMAIL } from './supabaseClient.js';
+import { supabase, HSE_PASSWORD } from './supabaseClient.js';
 
 const PERMIT_PREFIX = 'JG-HSE-PTW-';
 const BUCKET = 'ptw-attachments';
+const SESSION_KEY = 'jg_ptwa_authed';
 
 /* ---------------------------- Auth ------------------------------ */
+// Fixed department password, same pattern as JGM / JA Installation.
+// Login state lives in sessionStorage: it survives a page refresh (so you
+// don't get logged out while working) but clears the moment the browser
+// tab/app is actually closed, so the login screen always reappears next
+// time — no server-side account required, so this can never break due to
+// which Supabase project is configured.
 
 export async function login(password) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: HSE_EMAIL,
-    password,
-  });
-  if (error) {
-    console.error('login error', error.message);
-    return false;
+  const ok = password === HSE_PASSWORD;
+  if (ok) {
+    try { sessionStorage.setItem(SESSION_KEY, '1'); } catch (e) { /* ignore */ }
   }
-  return !!data.session;
+  return ok;
 }
 
 export async function logout() {
-  await supabase.auth.signOut();
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
 }
 
 export async function isLoggedIn() {
-  const { data } = await supabase.auth.getSession();
-  return !!data.session;
+  try { return sessionStorage.getItem(SESSION_KEY) === '1'; } catch (e) { return false; }
 }
 
-/** Subscribe to auth changes (e.g. token expiry, sign-out elsewhere). */
-export function onAuthStateChange(callback) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    callback(!!session);
-  });
-  return data.subscription;
+/** No server-side session to subscribe to anymore; kept as a no-op so
+ * callers (App.jsx) don't need to change. */
+export function onAuthStateChange(_callback) {
+  return { unsubscribe() {} };
 }
 
 /* ------------------------- Permit numbering ----------------------- */

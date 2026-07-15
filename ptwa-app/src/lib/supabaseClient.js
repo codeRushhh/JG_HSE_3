@@ -21,12 +21,16 @@ export const supabase = createClient(
   isSupabaseConfigured ? anonKey : 'placeholder-anon-key',
   {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
+      persistSession: false,
+      autoRefreshToken: false,
     },
   }
 );
 
-// Single shared HSE account — matches the app's single-password login (2526).
-// The email is fixed/internal; only the password field is shown to the user.
-export const HSE_EMAIL = 'hse@josephgroup.app';
+// PTWA no longer uses Supabase Auth (that required a matching auth.users
+// row to exist in whichever Supabase project is configured, which broke
+// every time the app was pointed at a different/shared database). Login is
+// now a fixed department password, checked in dataStore.js, same pattern
+// as the JGM and JA Installation apps. Data reads/writes use the shared
+// anon key like every other app in the portal.
+export const HSE_PASSWORD = '2526';

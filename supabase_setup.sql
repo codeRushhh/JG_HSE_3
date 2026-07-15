@@ -137,92 +137,67 @@ alter table permits enable row level security;
 alter table permit_attachments enable row level security;
 alter table permit_counter enable row level security;
 
+-- PTWA no longer uses Supabase Auth (see PART 3 note below for why) — it
+-- uses a fixed department password checked inside the app, same as JGM
+-- and JA Installation. Data access uses the shared anon key, so these
+-- policies are open, matching kv_store's policies above.
 drop policy if exists "HSE full access - permits" on permits;
-create policy "HSE full access - permits"
+drop policy if exists "Open access - permits" on permits;
+create policy "Open access - permits"
 on permits for all
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 drop policy if exists "HSE full access - attachments" on permit_attachments;
-create policy "HSE full access - attachments"
+drop policy if exists "Open access - attachments" on permit_attachments;
+create policy "Open access - attachments"
 on permit_attachments for all
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 drop policy if exists "HSE full access - counter" on permit_counter;
-create policy "HSE full access - counter"
+drop policy if exists "Open access - counter" on permit_counter;
+create policy "Open access - counter"
 on permit_counter for all
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 insert into storage.buckets (id, name, public)
 values ('ptw-attachments', 'ptw-attachments', false)
 on conflict (id) do nothing;
 
 drop policy if exists "HSE read attachments" on storage.objects;
-create policy "HSE read attachments"
+drop policy if exists "Open read attachments" on storage.objects;
+create policy "Open read attachments"
 on storage.objects for select
-using (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
+using (bucket_id = 'ptw-attachments');
 
 drop policy if exists "HSE upload attachments" on storage.objects;
-create policy "HSE upload attachments"
+drop policy if exists "Open upload attachments" on storage.objects;
+create policy "Open upload attachments"
 on storage.objects for insert
-with check (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
+with check (bucket_id = 'ptw-attachments');
 
 drop policy if exists "HSE delete attachments" on storage.objects;
-create policy "HSE delete attachments"
+drop policy if exists "Open delete attachments" on storage.objects;
+create policy "Open delete attachments"
 on storage.objects for delete
-using (bucket_id = 'ptw-attachments' and auth.role() = 'authenticated');
+using (bucket_id = 'ptw-attachments');
 
 -- ---------------------------------------------------------------
--- PART 3 — Permanently set the single HSE login account & password.
--- Safe to re-run any time: if the account exists, this resets its
--- password to 2526; if it doesn't exist yet, this creates it. This
--- is how you "permanently" fix the PTWA password from now on —
--- just re-run this block in the SQL Editor whenever you want to
--- reset it, instead of hunting for the user in Authentication ->
--- Users (which is also fine to use, but this is more reliable).
+-- PART 3 — REMOVED. This used to create/reset a Supabase Auth user
+-- (hse@josephgroup.app) directly in auth.users so PTWA could log in
+-- with password 2526. That's exactly what kept breaking: every time
+-- PTWA pointed at a different Supabase project, that user didn't
+-- exist there, so login failed with "Incorrect password, or unable
+-- to reach the server." PTWA's password is now checked inside the
+-- app itself (like JGM/JA Installation), so no database user is
+-- needed at all — it will work in any Supabase project as long as
+-- PART 1 and PART 2 above have been run in it.
 -- ---------------------------------------------------------------
-create extension if not exists pgcrypto;
-
-do $$
-declare
-  hse_uid uuid;
-begin
-  select id into hse_uid from auth.users where email = 'hse@josephgroup.app';
-
-  if hse_uid is null then
-    hse_uid := gen_random_uuid();
-    insert into auth.users (
-      instance_id, id, aud, role, email, encrypted_password,
-      email_confirmed_at, created_at, updated_at,
-      raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token
-    ) values (
-      '00000000-0000-0000-0000-000000000000', hse_uid, 'authenticated', 'authenticated',
-      'hse@josephgroup.app', crypt('2526', gen_salt('bf')),
-      now(), now(), now(),
-      '{"provider":"email","providers":["email"]}', '{}', false, ''
-    );
-
-    insert into auth.identities (
-      id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at
-    ) values (
-      gen_random_uuid(), hse_uid, hse_uid,
-      jsonb_build_object('sub', hse_uid::text, 'email', 'hse@josephgroup.app'),
-      'email', now(), now(), now()
-    );
-  else
-    update auth.users
-    set encrypted_password = crypt('2526', gen_salt('bf')),
-        email_confirmed_at = coalesce(email_confirmed_at, now()),
-        updated_at = now()
-    where id = hse_uid;
-  end if;
-end $$;
 
 -- ============================================================
 -- Done. Check it worked any time with:
 -- select key from kv_store order by updated_at desc limit 10;
 -- select permit_no, status from permits order by created_at desc limit 10;
--- select email, email_confirmed_at from auth.users where email = 'hse@josephgroup.app';
 -- ============================================================

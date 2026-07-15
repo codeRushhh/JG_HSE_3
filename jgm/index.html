@@ -1665,7 +1665,12 @@ async function doHseSetupPin(){
   if(pin !== confirm){ errEl.textContent = "PINs do not match. Please re-enter."; return; }
   const others = await Promise.all(HSE_NAMES.filter(n=>n!==name).map(n=>storGet(hsePinKey(n))));
   if(others.some(o=>o && o.pin === pin)){ errEl.textContent = "That PIN is already used by another HSE member. Please choose a different one."; return; }
-  await storSet(hsePinKey(name), {pin, setAt: nowIso()});
+  const ok = await storSet(hsePinKey(name), {pin, setAt: nowIso()});
+  if(!ok){
+    errEl.textContent = "Couldn't save your PIN — check your internet connection and try again. (If this keeps happening, the database may be unreachable.)";
+    return;
+  }
+  hsePinStatuses[name] = true;
   setState({hseUser:name, screen:"hse_dash", hseTab:"overview"});
 }
 
