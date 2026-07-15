@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Menu, X, Home, ChevronLeft, ClipboardList, Settings as SettingsIcon, Clock, LogOut, History } from "lucide-react";
+import { Menu, X, Home, ChevronLeft, ClipboardList, Settings as SettingsIcon, Clock, LogOut, History, BookOpen } from "lucide-react";
 
 import LoginScreen from "./components/LoginScreen";
 import HomeMenu from "./components/HomeMenu";
@@ -9,6 +9,7 @@ import ProjectEntitySelection from "./components/ProjectEntitySelection";
 import ModuleSelection from "./components/ModuleSelection";
 import Dashboard from "./components/Dashboard";
 import ReportsHome from "./components/ReportsHome";
+import RegistersHome from "./components/RegistersHome";
 import ReportsBrowser from "./components/ReportsBrowser";
 import SettingsScreen from "./components/SettingsScreen";
 import FireHoseReelInspection from "./components/FireHoseReelInspection";
@@ -52,10 +53,10 @@ const MODULE_COMPONENTS = {
 // Every screen except login shows the shared top bar (hamburger + settings).
 const WRAPPED_ROUTES = new Set([
   "home", "inspectionType", "department", "projectEntity", "moduleSelection",
-  "module", "dashboard", "reportsHome", "reportsBrowser", "settings", "recentInspections", "activity",
+  "module", "dashboard", "reportsHome", "reportsBrowser", "settings", "recentInspections", "activity", "registersHome",
 ]);
 
-function TopBar({ onGoHome, onGoBack, onGoReports, onGoRecent, onGoActivity, onLogout, onOpenSettings, canGoBack }) {
+function TopBar({ onGoHome, onGoBack, onGoReports, onGoRegisters, onGoRecent, onGoActivity, onLogout, onOpenSettings, canGoBack }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ position: "relative", fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" }}>
@@ -110,6 +111,9 @@ function TopBar({ onGoHome, onGoBack, onGoReports, onGoRecent, onGoActivity, onL
           </button>
           <button onClick={() => { setOpen(false); onGoReports(); }} style={menuItemStyle}>
             <ClipboardList size={16} color={BRAND_BLUE} /> Reports
+          </button>
+          <button onClick={() => { setOpen(false); onGoRegisters(); }} style={menuItemStyle}>
+            <BookOpen size={16} color={BRAND_BLUE} /> Registers
           </button>
           <button onClick={() => { setOpen(false); onGoRecent(); }} style={menuItemStyle}>
             <Clock size={16} color={BRAND_BLUE} /> Recent Inspection
@@ -216,6 +220,7 @@ export default function App() {
     if (key === "startInspection") pushEntry({ route: "inspectionType" });
     else if (key === "dashboard") pushEntry({ route: "dashboard" });
     else if (key === "reports") pushEntry({ route: "reportsHome" });
+    else if (key === "registers") pushEntry({ route: "registersHome" });
   }
 
   function handleInspectionTypeSelect(type) {
@@ -271,6 +276,14 @@ export default function App() {
     pushEntry({ route: "activity" });
   }
 
+  function handleGoRegisters() {
+    pushEntry({ route: "registersHome" });
+  }
+
+  function handleOpenRegister(moduleKey) {
+    pushEntry({ route: "module", moduleKey, initialScreen: "register" });
+  }
+
   function handleOpenSettings() {
     pushEntry({ route: "settings" });
   }
@@ -301,6 +314,7 @@ export default function App() {
           onGoHome={handleGoHome}
           onGoBack={handleHamburgerBack}
           onGoReports={handleGoReports}
+          onGoRegisters={handleGoRegisters}
           onGoRecent={handleGoRecent}
           onGoActivity={handleGoActivity}
           onLogout={handleLogout}
@@ -337,8 +351,12 @@ export default function App() {
         <ReportsHome onSelect={handleSelectReportsMode} />
       )}
 
+      {current.route === "registersHome" && (
+        <RegistersHome onSelect={handleOpenRegister} />
+      )}
+
       {current.route === "recentInspections" && (
-        <RecentInspections onOpenReport={handleOpenReport} />
+        <RecentInspections onOpenReport={handleOpenReport} onEditReport={handleEditReport} />
       )}
 
       {current.route === "activity" && (
@@ -346,7 +364,7 @@ export default function App() {
       )}
 
       {current.route === "reportsBrowser" && (
-        <ReportsBrowser mode={current.mode} onOpenReport={handleOpenReport} />
+        <ReportsBrowser mode={current.mode} onOpenReport={handleOpenReport} onEditReport={handleEditReport} />
       )}
 
       {current.route === "settings" && (
