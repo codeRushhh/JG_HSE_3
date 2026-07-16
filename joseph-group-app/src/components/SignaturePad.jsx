@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Eraser, Check } from "lucide-react";
+import { Eraser, Check, Upload } from "lucide-react";
 
 const BRAND_BLUE = "#1B3C74";
 
@@ -17,6 +17,7 @@ function sigKey(personName) {
 export default function SignaturePad({ label, personName, value, onChange }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
+  const fileInputRef = useRef(null);
   const drawingRef = useRef(false);
   const lastPtRef = useRef(null);
   const [mode, setMode] = useState(value ? "image" : "draw"); // "draw" | "image"
@@ -136,6 +137,40 @@ export default function SignaturePad({ label, personName, value, onChange }) {
     }
   }
 
+  function triggerUpload() {
+    if (fileInputRef.current) fileInputRef.current.click();
+  }
+
+  async function handleFileChange(e) {
+    const file = e.target.files && e.target.files[0];
+    // allow choosing the same file again later
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose an image file (photo or picture of a signature).");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      alert("That image is too large. Please choose a photo under 8MB.");
+      return;
+    }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      onChange && onChange(dataUrl);
+      setMode("image");
+      if (remember && (personName || "").trim()) {
+        await saveSignature(dataUrl);
+      }
+    } catch (e) {
+      alert("Could not read that image. Please try a different file.");
+    }
+  }
+
   function clearSignature() {
     onChange && onChange("");
     setMode("draw");
@@ -172,6 +207,25 @@ export default function SignaturePad({ label, personName, value, onChange }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 6 }}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+
+        <button
+          type="button"
+          onClick={triggerUpload}
+          style={{
+            display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", background: "transparent",
+            color: BRAND_BLUE, border: "1px solid " + BRAND_BLUE, borderRadius: 8, fontSize: 11.5, cursor: "pointer",
+          }}
+        >
+          <Upload size={12} /> Upload from device
+        </button>
+
         <button
           type="button"
           onClick={clearSignature}
